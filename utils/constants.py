@@ -1,0 +1,1 @@
+NAME_LOG = "animes_download"
