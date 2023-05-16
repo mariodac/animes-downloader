@@ -1,18 +1,22 @@
 import os
 import ntpath
+from bs4 import BeautifulSoup
 from log import Logger
 import sys
-from time import ctime
+from time import ctime, sleep
 from progress.bar import ChargingBar
 from common import Common
 import requests
 import re
 
 class Web():
-    def __init__(self, name_log, binary_location):
+    def __init__(self, name_log, binary_location=None):
         self.log = Logger(name_log)
         self.common = Common(name_log)
-        self.binary_location = binary_location
+        if binary_location:
+            self.binary_location = binary_location
+        else:
+            self.binary_location =self.verify_chrome()
         
       
     def download_archive(self, url, path_archive=None):  
@@ -141,3 +145,47 @@ class Web():
         else:
             print("Navegador não instalado")
             return None
+        
+    def web_scrap(self, url=None, markup=None):
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+        }
+        soup = None
+        feature = 'html.parser'
+        if markup:
+            soup = BeautifulSoup(markup, feature)
+        elif url:
+            request = requests.get(url, headers=headers)
+            soup = BeautifulSoup(request.content, feature)
+        return soup
+    
+    
+    def check_driver(self, driver):
+        """
+         Verifique se há mais de uma janela para mudar.
+         
+         @param driver - Motor de selênio a verificar
+        """
+        # Passe para a ultima janela.
+        if len(driver.window_handles)>1:
+            driver.switch_to.window(driver.window_handles[-1])
+            driver.close()
+            sleep(5)
+            # Passe para a primeira janela.
+            driver.switch_to.window(driver.window_handles[0])
+
+    def check_crdownload(self, save_path:os.PathLike):
+        """
+            Verifique se o crdownload está presente em save_path. Este é um hack para evitar o download que não termina ou ocorra um erro
+            
+            @param save_path - Caminho para salvar arquivos
+        """
+        # Esta loop é usado para verificar se há quaisquer crdownloads no save_path.
+        while True:
+            files = os.listdir(save_path)
+            files = [x for x in files if x.endswith('.crdownload')]
+            # Se não houver arquivos na lista, encerre o loop.
+            if len(files) == 0:
+                break
+if __name__ == '__main__':
+    Web('animes_downloads')
