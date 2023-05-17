@@ -5,14 +5,15 @@ from log import Logger
 import sys
 from time import ctime, sleep
 from progress.bar import ChargingBar
-from common import Common
+from selenium.webdriver.chrome.options import Options
+import common
 import requests
 import re
 
 class Web():
     def __init__(self, name_log, binary_location=None):
         self.log = Logger(name_log)
-        self.common = Common(name_log)
+        self.common = common.Common(name_log)
         if binary_location:
             self.binary_location = binary_location
         else:
@@ -95,24 +96,25 @@ class Web():
             
     def optionsChrome(self, headless=False, download_output=None, crx_extension=None):
         try:
+            chrome_options = Options()
             if(headless):
-                self.chrome_options.add_argument("--headless")
+                chrome_options.add_argument("--headless")
             prefs = {}
-            self.chrome_options.add_argument("--start-maximized")
-            self.chrome_options.add_argument("--disable-gpu")
-            self.chrome_options.add_argument("--disable-logging")
-            self.chrome_options.add_argument("--log-level=3")
-            self.chrome_options.add_argument("--ignore-certificate-errors")
-            self.chrome_options.add_argument("--ignore-ssl-errors")
-            self.chrome_options.binary_location = self.binary_location
+            chrome_options.add_argument("--start-maximized")
+            chrome_options.add_argument("--disable-gpu")
+            chrome_options.add_argument("--disable-logging")
+            chrome_options.add_argument("--log-level=3")
+            chrome_options.add_argument("--ignore-certificate-errors")
+            chrome_options.add_argument("--ignore-ssl-errors")
+            chrome_options.binary_location = self.binary_location
             if download_output:
                 download_output = os.path.normpath(download_output)
                 download_output = download_output.replace('/',ntpath.sep)
                 prefs.update({"download.default_directory" : download_output})
             if crx_extension:
-                self.chrome_options.add_extension(crx_extension)
-            self.chrome_options.add_experimental_option('prefs', prefs)
-            return self.chrome_options
+                chrome_options.add_extension(crx_extension)
+            chrome_options.add_experimental_option('prefs', prefs)
+            return chrome_options
             
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
