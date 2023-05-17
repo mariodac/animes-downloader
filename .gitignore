@@ -160,6 +160,7 @@ cython_debug/
 #.idea/
 
 .vscode/*
+.vscode/*.json
 .vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
@@ -173,7 +174,7 @@ cython_debug/
 *.vsix
 
 .vscode/*
-!.vscode/settings.json
+.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
