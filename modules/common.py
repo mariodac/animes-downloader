@@ -98,10 +98,18 @@ class Common():
             self.log.getLogger().error('ERRO DURANTE EXECUÇÃO {}: \nTIPO - {}\nARQUIVO - {}\nLINHA - {}\nMESSAGE:{}'.format(self.print_time.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__))
         
     def only_read_int(self, string=None):
+        """
+         Leia apenas um número inteiro do usuário. Se o usuário não inserir nada, um prompt é impresso
+         
+         @param string - Mensagem a ser exibida no prompt
+         
+         @return Integra leitura do usuário ou None se nada foi informado
+        """
         entrada = None
         try:
             entrada = int(input(string))
         except Exception:
+            # Loop para leitura de apenas inteiro
             while type(entrada) != int:
                 print('Opção invalida')
                 entrada = input(string)
