@@ -96,6 +96,20 @@ class Common():
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('ERRO DURANTE EXECUÇÃO {}: \nTIPO - {}\nARQUIVO - {}\nLINHA - {}\nMESSAGE:{}'.format(self.print_time.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__))
             self.log.getLogger().error('ERRO DURANTE EXECUÇÃO {}: \nTIPO - {}\nARQUIVO - {}\nLINHA - {}\nMESSAGE:{}'.format(self.print_time.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__))
+        
+    def only_read_int(self, string=None):
+        entrada = None
+        try:
+            entrada = int(input(string))
+        except Exception:
+            while type(entrada) != int:
+                print('Opção invalida')
+                entrada = input(string)
+                try:
+                    entrada = int(entrada)
+                except ValueError:
+                    continue
+        return entrada
             
     def timestamp (self):    
         """ Retorna tempo  atual em segundos"""       
