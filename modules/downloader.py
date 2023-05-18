@@ -372,7 +372,18 @@ class DownloaderAnime():
             self.logger.getLogger().error('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.down_episodes_saiko.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
             if driver:
                 driver.quit()
-        
+    
+    def get_anime_animefire_net(self, search:str):
+        try:
+            search = search.replace(' ', '-')
+            search = search.lower()
+            site = self.web.web_scrap(url='https://animefire.net/pesquisar/{}'.format(search))
+            print(site)
+        except:
+            exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            self.logger.getLogger().error('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.down_episodes_saiko.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
+     
 if __name__ == "__main__":
     # possiveis sites para baixar animes pelo script
     # https://animefire.to
@@ -392,6 +403,8 @@ if __name__ == "__main__":
     
     downloader = DownloaderAnime()
     common = downloader.common
+    
+    downloader.get_anime_animefire_net("Naruto Shippuuden")
     
     while True:
         # cria instancia da tela que não tera um pai (janela principal)
