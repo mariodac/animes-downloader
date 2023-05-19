@@ -1,8 +1,9 @@
 import os
 import ntpath
+import sys
+sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "modules"))
 from bs4 import BeautifulSoup
 from log import Logger
-import sys
 from time import ctime, sleep
 from progress.bar import ChargingBar
 from selenium.webdriver.chrome.options import Options

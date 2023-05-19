@@ -4,6 +4,7 @@ import platform
 import ctypes
 import sys
 from time import ctime, time
+sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "modules"))
 
 class Common():
     def __init__(self, log_name:str):

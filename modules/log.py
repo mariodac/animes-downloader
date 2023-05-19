@@ -1,5 +1,8 @@
 import logging
 from os import path, environ, name
+import sys
+sys.path.append(path.join(path.split(path.dirname(__file__))[0], "modules"))
+
 class Logger:
     def __init__(self, log_name):
         """
