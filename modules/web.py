@@ -1,54 +1,64 @@
 import os
 import ntpath
 import sys
+import urllib.parse
 sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "modules"))
+sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "utils"))
+import constants as cnst
 from bs4 import BeautifulSoup
 from log import Logger
 from time import ctime, sleep
 from progress.bar import ChargingBar
+from progress.spinner import Spinner
 from selenium.webdriver.chrome.options import Options
+from selenium import webdriver
 import common
 import requests
 import re
 
 class Web():
-    def __init__(self, name_log, binary_location=None):
-        self.log = Logger(name_log)
-        self.common = common.Common(name_log)
+    def __init__(self, binary_location=None):
+        self.log = Logger(cnst.NAME_LOG)
+        self.common = common.Common()
         if binary_location:
             self.binary_location = binary_location
         else:
             self.binary_location =self.verify_chrome()
         
       
-    def download_archive(self, url, path_archive=None):  
+    def download_archive(self, url, path_archive):  
         """
          Baixe o arquivo e retorne caminho para ele. Se o path_archive é None defina automático nome para baixar arquivo 
          
          @param url - URL do arquivo para download
          @param path_archive - Caminho para arquivo para download (default None)
          
-         @return O que é?
+         @return status
         """
         try:
             freespace = self.common.get_free_space_mb(path_archive)
             # Verifique espaço livre.
             if not freespace < 1024:
-                response = requests.get(url, headers=self.headers, stream=True)
+                response = requests.get(url, stream=True)
                 content_type = response.headers['content-type']
-                # Verifica se caminho do arquivo foi passado.
-                if(path_archive):
-                    archiveName = os.path.join(path_archive, os.path.basename(response.url.split("/")[-1]))
-                    path_archiveName = os.path.join(path_archive, archiveName)
-                else:
-                    archiveName = os.path.join(self.saida_path, os.path.basename(response.url.split("/")[-1]))
-                    path_archiveName = os.path.join(self.saida_path,"{}-{}.{}".format(archiveName, ctime().replace(' ', '_').replace(':','-'), content_type.split('/')[-1]))
                 # Verifica se houve sucesso na requisição da url do arquivo
                 if response.status_code == requests.codes.OK:
+                    # Verifica se caminho do arquivo foi passado.
+                    filename_header = response.headers.get('content-disposition')
+                    # Extrair o valor do header "filename"
+                    filename = filename_header.split("filename=")[1]
+                    # Decodificar o valor do cabeçalho
+                    filename_decoded = urllib.parse.unquote(filename)
+                    filename_decoded = self.common.normalize_name(filename_decoded)
+                    path_archiveName = os.path.join(path_archive, filename_decoded)
                     # Verifica se arquivo existe
                     if os.path.isfile(path_archiveName) is False:
+                        chunks = []
+                        spinner = Spinner('Loading ')
+                        for x in response:
+                            chunks.append(x)
+                            spinner.next()
                         # gera barra de progresso
-                        chunks = [x for x in response]
                         bar = ChargingBar('Baixando',  suffix='%(percent).1f%% - %(eta)ds', max=len(chunks))
                         with open(path_archiveName, "wb") as f:
                             # Escreva cada pedaço no arquivo.
@@ -57,12 +67,12 @@ class Web():
                                 bar.next()
                             bar.finish()
                         print("Download finalizado. Arquivo salvo em: {}".format(path_archiveName))
+                        return True
                     else:
                         print("Arquivo existente")
-                        return None
+                        return False
                 else:
                     response.raise_for_status()
-                    return None
                 return path_archiveName
             else:
                 print("Sem espaço na memória")
@@ -70,13 +80,13 @@ class Web():
         except Exception as err:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            self.log.getLogger().error('ERRO DURANTE EXECUÇÃO na FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.download_archive.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace("\n", " ")))
+            self.log.get_logger().error('ERRO DURANTE EXECUÇÃO na FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.download_archive.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace("\n", " ")))
             # O erro é 520 Erro de servidor 522 Erro de servidor 522 Erro de servidor 520 Erro de servidor
-            if('520 Server Error' in str(err) or '522 Server Error' in str(err) or '404 Client Error' in str(err)):
-                self.log.getLogger().error('INTERN ERROR: {0}'.format(err))
+            if('520 Server Error' in str(err) or '522 Server Error' in str(err) or '404 Client Error' in str(err) or '403 Client Error' in str(err)):
+                self.log.get_logger().error('INTERN ERROR: {0}'.format(err))
             else:
-                self.log.getLogger().error('ERROR na linha {}: {}'.format(exc_tb.tb_lineno, err))
-            raise
+                self.log.get_logger().error('ERROR na linha {}: {}'.format(exc_tb.tb_lineno, err))
+            return False
     
     def wait_download_file(self, path_download):
         """
@@ -117,10 +127,10 @@ class Web():
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            self.log.getLogger().error('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.wait_download_file.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
+            self.log.get_logger().error('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.wait_download_file.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
             sys.exit()
             
-    def optionsChrome(self, headless=False, download_output=None, crx_extension=None):
+    def optionsChrome(self, headless=False, download_output=None, crx_extension:list=None):
         # Criar uma instância dr opções Chrome e devolvê-lo. Esta é a primeira chamada que você quer executar
         try:
             chrome_options = Options()
@@ -139,14 +149,15 @@ class Web():
                 download_output = download_output.replace('/',ntpath.sep)
                 prefs.update({"download.default_directory" : download_output})
             if crx_extension:
-                chrome_options.add_extension(crx_extension)
+                for extension in crx_extension:
+                    chrome_options.add_extension(extension)
             chrome_options.add_experimental_option('prefs', prefs)
             return chrome_options
             
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            self.log.getLogger().error('ERRO DURANTE EXECUÇÃO {}: \nTIPO - {}\nARQUIVO - {}\nLINHA - {}\nMESSAGE:{}'.format(self.optionsChrome.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__))
+            self.log.get_logger().error('ERRO DURANTE EXECUÇÃO {}: \nTIPO - {}\nARQUIVO - {}\nLINHA - {}\nMESSAGE:{}'.format(self.optionsChrome.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__))
         
     def verify_chrome(self):
         """
@@ -208,17 +219,17 @@ class Web():
         return soup
     
     
-    def check_driver(self, driver):
+    def check_driver(self, driver:webdriver):
         """
          Verifique se há mais de uma janela para mudar.
          
          @param driver - Motor de selênio a verificar
         """
         # Passe para a ultima janela.
-        if len(driver.window_handles)>1:
+        while len(driver.window_handles)>1:
             driver.switch_to.window(driver.window_handles[-1])
             driver.close()
-            sleep(5)
+            sleep(1)
             # Passe para a primeira janela.
             driver.switch_to.window(driver.window_handles[0])
 
