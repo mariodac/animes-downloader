@@ -1,0 +1,394 @@
+import os
+import sys
+import time
+import re
+import logging
+import requests
+import utils.constants as cnst
+sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0]))
+sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "utils"))
+sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "modules"))
+from webScrape import WebScrape
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.by import By
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from selenium.webdriver.common.keys import Keys
+from webdriver_manager.chrome import ChromeDriverManager
+from common import Common
+
+# CONFIGURAR LOGGER
+name_log = 'anilist_get_chaps'
+logger = logging.getLogger(name_log)
+# INICIO configura nivel de log
+logger.setLevel('DEBUG')
+if os.name == 'nt':
+    path_log = os.environ['TEMP']
+    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    # aplica formato 
+    formatter = logging.Formatter(log_format)
+else:
+    path_log = os.environ['HOME']
+    # formato do log
+    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    formatter = logging.Formatter(log_format)
+path_log = os.path.join(path_log, '.{}'.format(name_log))
+# especificando nome do arquivo de log 
+file_handler = logging.FileHandler("{}.log".format(path_log))
+file_handler.setFormatter(formatter)
+# adiciona arquivo ao manipulador de arquivo de log
+logger.addHandler(file_handler)
+
+class AnilistGetChaps():
+    def __init__(self):
+        self.common = Common()
+
+    def scroll_to_bottom_page(self,driver):
+        """Rola até o final da lista de chat
+        """
+        try:
+            SCROLL_PAUSE_TIME = 2
+            # Pega tamanho do scroll
+            scroll_height = driver.execute_script("return document.getElementsByClassName('list-entries')[0].scrollHeight")
+            # pressiona END
+            element = driver.find_elements(By.TAG_NAME, 'body')
+            element[-1].send_keys(Keys.END)
+            # Define o tamanho de rolagem
+            scroll_old = scroll_height
+            while True:
+                # Pega tamanho do scroll
+                scroll_height = driver.execute_script("return document.getElementsByClassName('list-entries')[0].scrollHeight")
+                # armazena tamanho antigo antes da rolagem
+                scroll_old = scroll_height
+                # pressiona pgup
+                element = driver.find_elements(By.TAG_NAME, 'body')
+                element[-1].send_keys(Keys.END)
+                # Espera página carregar
+                time.sleep(SCROLL_PAUSE_TIME)
+                # Verifica se chegou no fim
+                scroll_height = driver.execute_script("return document.getElementsByClassName('list-entries')[0].scrollHeight")
+                if scroll_old >= scroll_height:
+                    break
+        except Exception as err:
+            driver.quit()
+            _, _, tb = sys.exc_info()
+            if tb is not None:
+                # logger.error('Na linha {} -{}'.format(tb.tb_lineno,err), exc_info=True)
+                print('Na linha {} -{}'.format(tb.tb_lineno,err))
+            else:
+                # logger.error(f"log_exception() called without an active exception.")
+                print('log_exception() called without an active exception.')
+
+    def login_anilist(self,driver):
+        driver.get('https://anilist.co/login')
+        inputs = driver.find_elements(By.CLASS_NAME, 'al-input')
+        # insere informações de login
+        if inputs:
+            inputs[0].send_keys('mdac.mario@gmail.com')
+            inputs[1].send_keys('SWtkbq8Yr65JKDc')
+        print('Vá no navegador e resolva o captcha e clique no Login\nAguarde carregar a página inicial para continuar')
+        print('\a')
+        if os.name == 'nt':
+            time.sleep(1)
+            print('\a')
+            os.system('pause')
+        else:
+            time.sleep(1)
+            print('\a')
+            input('Press enter to continue')
+
+    def search_golden(self,driver, anime_name, url_search_golden):
+        driver.get(url_search_golden+anime_name)
+        site = web.webScraping(markup=driver.page_source)
+        mangas = site.find_all('div', class_='mangas')
+        if len(mangas) > 1:
+            print(f'Foram encontrados mais de 1 resultado correspondente ao "{anime_name}"')
+            print('\a')
+            for index, manga in enumerate(mangas):
+                print(f'{index+1} - {manga.text.strip()}')
+            time.sleep(1)
+            print('\a')
+            choice = self.common.only_read_int(len(mangas), 'Sua escolha => ')
+            if choice == -1:
+                return None
+            site = None
+            return mangas[choice-1]
+        elif len(mangas) == 0:
+            site = None
+            return None
+        else:
+            site = None
+            return mangas[0]
+
+    def get_animes_anilist(self,driver, username):
+        # INICIA buscar lista de mangas em leitura no anilist
+        driver.get('https://anilist.co/user/{}/mangalist/Reading'.format(username))
+        time.sleep(2)
+        self.scroll_to_bottom_page(driver)
+        site = web.webScraping(markup=driver.page_source)
+        # titles = site.find_all('div', class_='title')
+        # titles_links = [x.a.get('href') for x in titles if x.a]
+        entrys = site.find_all('div', class_='entry-card')
+        titles_links = {}
+        # monta dicionario no seguinte esquema {nome_anime:[link, progresso]}
+        print("Obtendo lista de animes")
+        for entry in entrys:
+            title = entry.find('div', class_='title')
+            if title:
+                anime_name = title.text
+                anime_name = anime_name.strip()
+                titles_links.update({anime_name:[]})
+                if title.a:
+                    titles_links[anime_name].append(title.a.get('href'))
+                progress = entry.find('div', class_='progress')
+                if progress:
+                    progress_text = progress.text
+                    progress_text = progress_text.strip()
+                    progress_text = progress_text.replace('+', '')
+                    titles_links[anime_name].append(progress_text)
+        # INICIO busca nomes alternativos de cada anime
+        print("Buscando nomes alternativos")
+        t_0 = self.initCountTime(True)
+        for anime_name in titles_links:
+            item = titles_links.get(anime_name)
+            alt_names = []
+            if item:
+                driver.get('https://anilist.co'+item[0])
+                time.sleep(2)
+                data_set = [x for x in driver.find_elements(By.CLASS_NAME, 'data-set') if 'Romaji' in x.text or 'Synonyms' in x.text or 'English' in x.text]
+                if data_set:
+                    for data in data_set:
+                        value = data.find_elements(By.CLASS_NAME, 'value')
+                        if value:
+                            if '\n' in value[0].text:
+                                alt_names.extend(value[0].text.split('\n'))
+                                # item.extend(value[0].text.split('\n'))
+                            else:
+                                alt_names.append(value[0].text)
+                                # item.append(value[0].text)
+                item.append(alt_names)
+        # FIM busca nomes alternativos de cada anime
+        t_f = self.finishCountTime(t_0,True)
+        self.print_time(t_f)
+        # Salvar o arquivo 
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'alt_names.txt'), 'w', encoding='utf-8') as file_txt:
+            for item in titles_links:
+                file_txt.write(f"{item} -- {' || '.join(titles_links[item][:-1])} || {' || '.join(titles_links[item][-1])}\n")
+        print(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'alt_names.txt'))
+        # print(titles_links)
+        # FIM obter animes do anilist
+        return titles_links
+if __name__ == "__main__":
+    agc = AnilistGetChaps()
+    common = Common()
+    
+    # FIM configura nivel de log
+    s=Service(ChromeDriverManager().install())
+    web = WebScrape(name_log)
+    driver = webdriver.Chrome(service=s, options=web.optionsChrome())
+    url_agregador = cnst.AGREGADOR_MANGA.get('MANGASCHAN')
+    agc.login_anilist(driver)
+    # animes_list = get_animes_anilist(driver)
+    animes_list = {}
+    url_search_agregador = f'{url_agregador[0]}{url_agregador[1]}'
+
+    # ler o arquivo
+    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'alt_names.txt'), 'r', encoding='utf-8') as file_txt:
+        content = file_txt.readlines()
+        content = [x.replace('\n', '') for x in content]
+        for line in content:
+            slices = line.split(" -- ")
+            values = slices[-1].split(' || ')
+            alts = values[2:]
+            values = values[:2]
+            # alts = re.sub("(\'|\[|\])+", "", alts)
+            # alts = alts.split(',')
+            values.append(alts)
+            animes_list.update({slices[0] : values})
+
+    animes_list = dict(sorted(animes_list.items()))
+    anime_name = "undefined"
+    try:
+        mangas = []
+        needs_check = False
+        no_releases = None
+        new_release = None
+        finish = None
+        # compara o progresso do anilist com o do agregador manga
+        print("Iniciando pesquisa no {} mangas")
+        t_0 = common.initCountTime(True)
+        for anime_name, values in animes_list.items():
+            last_chap_anilist = values[1].split('/')[0]
+            if len(values[1].split('/')) > 1:
+                finish_chap_anilist = values[1].split('/')[1]
+            else:
+                finish_chap_anilist = None
+
+            checked = False
+            not_check = False
+            dismiss_check = False
+            
+            # pesquisa anime atual no golden mangas
+            while True:
+                manga = common.search_golden(driver, anime_name, url_search_agregador)
+                if manga:
+                    checked = True
+                    break
+                else:
+                    for value in values[-1]:
+                        manga = common.search_golden(driver, value, url_search_agregador)
+                        if manga:
+                            checked = True
+                            break
+                    if not checked:
+                        # logger.warning(f'Manga {anime_name} não encontrado')
+                        print(f'Manga {anime_name} não encontrado')
+                        print('\a')
+                        time.sleep(1)
+                        print('\a')
+                        os.system('pause')
+                        new_name = input('Digite outro nome >> ')
+                        manga = common.search_golden(driver, new_name, url_search_agregador)
+                        if manga:
+                            checked = True
+                        else:
+                            logger.warning(f'Manga {anime_name} não encontrado')
+                            checked = False
+                        break
+                    else:
+                        break
+            
+            if checked:
+                if manga:
+                    if manga.a:
+                        while True:
+                            try:
+                                driver.get(f'{url_agregador}{manga.a.get("href")}')
+                                break
+                            except:
+                                time.sleep(5)
+                                driver.get(f'{url_agregador}{manga.a.get("href")}')
+                        # alerta de maior de idade
+                        alert = driver.find_elements(By.CLASS_NAME, 'alert')
+                        if alert:
+                            link = alert[0].find_elements(By.TAG_NAME, 'a')
+                            actions = ActionChains(driver)
+                            actions.move_to_element(link[0]).perform()
+                            if link:
+                                actions.send_keys(Keys.PAGE_DOWN).perform()
+                                link[0].click()
+                        time.sleep(2)
+                        elements = driver.find_elements(By.XPATH, "//ul[@class='capitulos']/li")
+                        if elements:    
+                            search = re.search('[0-9]+', elements[0].text)
+                            if search:
+                                last_chap_golden = search.group(0)
+                                new_release = int(last_chap_golden) > int(last_chap_anilist)
+                                if int(last_chap_golden) < int(last_chap_anilist):
+                                    print("Checar manga {}".format(anime_name))
+                                    needs_check = True
+                                    logger.warning("Checar manga {}, com capitulos inconsistentes".format(anime_name))
+                                    # os.system('pause')
+                                if finish_chap_anilist:
+                                    finish = last_chap_golden == finish_chap_anilist
+                                else:
+                                    finish = False
+                                no_releases = int(last_chap_anilist) == int(last_chap_golden)
+            
+            else:
+                continue    
+            # abre página do anime no anilist para realizar edições
+            driver.get('https://anilist.co'+values[0])
+            time.sleep(2)
+            site = web.webScraping(markup=driver.page_source)
+            adult = site.find('div', class_='adult-label')
+            if adult:
+                adult = True
+            else:
+                adult = False
+            # busca botão para o dropdown
+            dropdown = driver.find_elements(By.XPATH, '//div[@class="dropdown el-dropdown"]')
+            if dropdown:
+                dropdown[0].click()
+                time.sleep(5)
+                # busca o as opções do dropdown
+                elements_dropdown = driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]')
+                if elements_dropdown:
+                    elements_dropdown = [x for x in driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]') if x.is_displayed()]
+                    if len(elements_dropdown) == 0:
+                        # inicia a busca até que encontre as opções do dropdown
+                        while True:
+                            elements_dropdown = driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]')
+                            time.sleep(5)
+                            # filtra apena elemento que estão visiveis
+                            elements_dropdown = [x for x in driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]') if x.is_displayed()]
+                            # verificar se encontrou as opções do dropdown
+                            if len(elements_dropdown) == 0:
+                                continue
+                            else:
+                                break
+                    else:
+                        # obtem o elemento da lista que pode varia a posição
+                        if len(elements_dropdown) > 1:
+                            elements_dropdown = elements_dropdown[1]
+                        else:
+                            elements_dropdown = elements_dropdown[0]
+                        # clica na opção "Open List Editor"
+                        if elements_dropdown.is_displayed():
+                            options = elements_dropdown.find_elements(By.TAG_NAME, 'li')
+                            if options:
+                                options[-1].click()
+                                time.sleep(5)
+                                checkboxs = driver.find_elements(By.CLASS_NAME, 'checkbox')
+                                if needs_check:
+                                    continue
+                                if adult:
+                                    check_box = checkboxs[3].find_elements(By.TAG_NAME, 'input')
+                                    logger.info(f'{anime_name} adicionado na lista Adult')
+                                    if check_box[0].is_selected() == False:
+                                        print(f'{anime_name} adicionado na lista Adult')
+                                        checkboxs[3].click()
+                                if no_releases:
+                                    check_box = checkboxs[0].find_elements(By.TAG_NAME, 'input')
+                                    logger.info(f'{anime_name} adicionado na lista Waiting new chaps releases')
+                                    if check_box[0].is_selected() == False:
+                                        print(f'{anime_name} adicionado na lista Waiting new chaps releases')
+                                        checkboxs[0].click()
+                                    # new chaps selected
+                                    check_box = checkboxs[1].find_elements(By.TAG_NAME, 'input')
+                                    if check_box[0].is_selected() == True:
+                                        print(f'{anime_name} removido na lista New chaps releases')
+                                        logger.info(f'{anime_name} removido na lista New chaps releases')
+                                        checkboxs[1].click()
+                                if new_release:
+                                    check_box = checkboxs[1].find_elements(By.TAG_NAME, 'input')
+                                    logger.info(f'{anime_name} adicionado da lista New chaps releases')
+                                    if check_box[0].is_selected() == False:
+                                        print(f'{anime_name} adicionado da lista New chaps releases')
+                                        logger.info(f'{anime_name} adicionado da lista New chaps releases')
+                                        checkboxs[1].click()
+                                    # waiting chaps selected
+                                    check_box = checkboxs[0].find_elements(By.TAG_NAME, 'input')
+                                    logger.info(f'{anime_name} removido da lista Waiting new chaps releases')
+                                    if check_box[0].is_selected() == True:
+                                        print(f'{anime_name} removido da lista Waiting new chaps releases')
+                                        logger.info(f'{anime_name} removido da lista Waiting new chaps releases')
+                                        checkboxs[0].click()
+                                if finish:
+                                    logger.info(f'{anime_name} adicionado na lista Finished releases')
+                                    check_box = checkboxs[2].find_elements(By.TAG_NAME, 'input')
+                                    if check_box[0].is_selected() == False:
+                                        print(f'{anime_name} adicionado na lista Finished releases')
+                                        checkboxs[2].click()
+                                save = driver.find_elements(By.CLASS_NAME, 'save-btn')
+                                if save:
+                                    save[0].click()
+                                time.sleep(2)
+        t_f = common.finishCountTime(t_0,True)
+        common.print_time(t_f)
+    except Exception as err:
+        driver.quit()
+        nline = sys.exc_info()[2]
+        if nline:
+            print('Anime com erro {}'.format(anime_name))
+            print('Na linha {} -{}'.format(nline.tb_lineno,err))
