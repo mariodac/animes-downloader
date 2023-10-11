@@ -12,7 +12,6 @@ from unidecode import unidecode
 from time import sleep
 from web import Web
 from common import Common
-from log import Logger
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from webdriver_manager.chrome import ChromeDriverManager
@@ -27,7 +26,6 @@ import getpass
 
 class DownloaderAnime():
     def __init__(self):
-        self.logger = Logger(cnst.NAME_LOG)
         self.web = Web()
         self.common = Common()
         
@@ -58,7 +56,7 @@ class DownloaderAnime():
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            self.logger.get_logger().error('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.init_webdriver.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
+            print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.init_webdriver.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
             sys.exit()
 
     def download_animes_episodes_fenix(self, url:str, save_path:os.PathLike):
@@ -128,7 +126,7 @@ class DownloaderAnime():
         except:
             exc_type,exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            self.logger.get_logger().error('ERRO DURANTE EXECUÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.download_animes_episodes_fenix.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
+            print('ERRO DURANTE EXECUÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.download_animes_episodes_fenix.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
 
     def login_saiko(self, save_path, web_driver:webdriver=None):
         try:
@@ -287,7 +285,7 @@ class DownloaderAnime():
             except Exception as err:
                 exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
                 fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                self.log.get_logger().error('ERRO DURANTE EXECUÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.down_episodes_saiko.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
+                print('ERRO DURANTE EXECUÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.down_episodes_saiko.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
             # define a quantidade de downloads a ser realizada
             downloads_count = 1
             # obtem itens da tabela
@@ -331,7 +329,7 @@ class DownloaderAnime():
                 except:
                     exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
                     fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-                    self.log.get_logger().error('ERRO DURANTE EXECUÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.down_episodes_saiko.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
+                    print('ERRO DURANTE EXECUÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.down_episodes_saiko.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
                 # buscando video
                 element = driver.find_elements(By.TAG_NAME, 'video')
                 if element:

@@ -1,4 +1,3 @@
-from log import Logger
 from unidecode import unidecode
 import os
 import re
@@ -12,13 +11,6 @@ import constants as cnst
 
 
 class Common():
-    def __init__(self):
-        """
-         Iniciar o log
-         
-         @param log_name -Nome do log
-        """
-        self.log = Logger(cnst.NAME_LOG)
         
     def normalize_name(self, name:str):
         """
@@ -54,7 +46,7 @@ class Common():
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            self.log.get_logger().error('ERRO DURANTE EXECUÇÃO na FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.get_free_space_mb.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace("\n", " ")))
+            print('ERRO DURANTE EXECUÇÃO na FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.get_free_space_mb.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace("\n", " ")))
             
         
     def create_folder(self, name, dirname):
@@ -84,7 +76,7 @@ class Common():
         except Exception as err:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            self.log.get_logger().error('ERRO DURANTE EXECUÇÃO na FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.create_folder.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace("\n", " ")))
+            print('ERRO DURANTE EXECUÇÃO na FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.create_folder.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace("\n", " ")))
             
     def print_time(self,t_f):    
         """
@@ -110,12 +102,10 @@ class Common():
                 horas = 0
                 dias = 0
             print('{} dias, {} horas, {} minutos e {} segundos'.format(dias,horas,minutos,segundos))
-            self.log.get_logger().info('Executado em: {} dias, {} horas, {} minutos e {} segundos'.format(dias, horas, minutos, segundos))
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('ERRO DURANTE EXECUÇÃO {}: \nTIPO - {}\nARQUIVO - {}\nLINHA - {}\nMESSAGE:{}'.format(self.print_time.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__))
-            self.log.get_logger().error('ERRO DURANTE EXECUÇÃO {}: \nTIPO - {}\nARQUIVO - {}\nLINHA - {}\nMESSAGE:{}'.format(self.print_time.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__))
         
     def only_read_int(self, string=None):
         """

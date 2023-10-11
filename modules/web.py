@@ -6,8 +6,7 @@ sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "modul
 sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "utils"))
 import constants as cnst
 from bs4 import BeautifulSoup
-from log import Logger
-from time import ctime, sleep
+from time import sleep
 from progress.bar import ChargingBar
 from progress.spinner import Spinner
 from selenium.webdriver.chrome.options import Options
@@ -18,7 +17,6 @@ import re
 
 class Web():
     def __init__(self, binary_location=None):
-        self.log = Logger(cnst.NAME_LOG)
         self.common = common.Common()
         if binary_location:
             self.binary_location = binary_location
@@ -80,12 +78,12 @@ class Web():
         except Exception as err:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            self.log.get_logger().error('ERRO DURANTE EXECUÇÃO na FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.download_archive.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace("\n", " ")))
+            print('ERRO DURANTE EXECUÇÃO na FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.download_archive.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace("\n", " ")))
             # O erro é 520 Erro de servidor 522 Erro de servidor 522 Erro de servidor 520 Erro de servidor
             if('520 Server Error' in str(err) or '522 Server Error' in str(err) or '404 Client Error' in str(err) or '403 Client Error' in str(err)):
-                self.log.get_logger().error('INTERN ERROR: {0}'.format(err))
+                print('INTERN ERROR: {0}'.format(err))
             else:
-                self.log.get_logger().error('ERROR na linha {}: {}'.format(exc_tb.tb_lineno, err))
+                print('ERROR na linha {}: {}'.format(exc_tb.tb_lineno, err))
             return False
     
     def wait_download_file(self, path_download):
@@ -127,7 +125,7 @@ class Web():
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            self.log.get_logger().error('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.wait_download_file.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
+            print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.wait_download_file.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
             sys.exit()
             
     def optionsChrome(self, headless=False, download_output=None, crx_extension:list=None):
@@ -157,7 +155,7 @@ class Web():
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            self.log.get_logger().error('ERRO DURANTE EXECUÇÃO {}: \nTIPO - {}\nARQUIVO - {}\nLINHA - {}\nMESSAGE:{}'.format(self.optionsChrome.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__))
+            print('ERRO DURANTE EXECUÇÃO {}: \nTIPO - {}\nARQUIVO - {}\nLINHA - {}\nMESSAGE:{}'.format(self.optionsChrome.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__))
         
     def verify_chrome(self):
         """

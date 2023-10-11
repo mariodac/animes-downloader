@@ -47,7 +47,7 @@ if __name__ == "__main__":
         option = input("Digite -> ")
         if option == '1':
             t_i = common.initCountTime(True)
-            log.get_logger().info('Inicado opção Baixar episódios Saiko Animes em {}'.format(common.timestamp()))
+            log.get_logger().info('Iniciado opção Baixar episódios Saiko Animes em {}'.format(common.timestamp()))
             login = input("Deseja realizar o login? (S)sim/(n)não\n-> ")
             out_path = common.create_folder("- Downloaded -", save_path)
             if 's' in login.lower() or 'sim' in login.lower() or 'si' in login.lower() or 'yes' in login.lower() or 'y' in login.lower():
