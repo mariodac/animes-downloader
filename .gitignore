@@ -187,3 +187,5 @@ cython_debug/
 *.vsix
 
 *teste.py
+
+alt_names.txt
