@@ -135,25 +135,25 @@ class Web():
             s=Service(ChromeDriverManager().install())
             if default:
                 if headless:
-                    driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=True, download_output=saida))
+                    driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=True, download_output=saida))
                 else:    
-                    driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=False, download_output=saida))    
+                    driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=False, download_output=saida))    
             else:
                 # caminho das extensões
                 extension_path = os.path.join(os.path.split(os.path.dirname(os.path.realpath(__file__)))[0], 'extensions')
-                extension = []
+                extension = [os.path.join(os.path.dirname(__file__), 'extensions', 'popup_blocker.crx')]
                 # extension = [os.path.join(extension_path, 'adblock.crx'), os.path.join(extension_path, 'enable_right_click.crx')]
                 # extension = [os.path.join(extension_path, 'enable_right_click.crx')]
                 try:
                     if headless:
-                        driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=True, download_output=saida, crx_extension=extension))
+                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=True, download_output=saida, crx_extension=extension))
                     else:
-                        driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=False, download_output=saida, crx_extension=extension))
+                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=False, download_output=saida, crx_extension=extension))
                 except:
                     if headless:
-                        driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=True, download_output=saida))
+                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=True, download_output=saida))
                     else:
-                        driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=False, download_output=saida))
+                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=False, download_output=saida))
             return driver
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
