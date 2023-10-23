@@ -45,34 +45,34 @@ class AnilistGetChapsFromReader():
         self.web = Web()
         self.driver = self.web.init_webdriver()
 
-    def scroll_to_bottom_page(self,driver):
+    def scroll_to_bottom_page(self):
         """Rola até o final da lista de chat
         """
         try:
             SCROLL_PAUSE_TIME = 2
             # Pega tamanho do scroll
-            scroll_height = driver.execute_script("return document.getElementsByClassName('list-entries')[0].scrollHeight")
+            scroll_height = self.driver.execute_script("return document.getElementsByClassName('list-entries')[0].scrollHeight")
             # pressiona END
-            element = driver.find_elements(By.TAG_NAME, 'body')
+            element = self.driver.find_elements(By.TAG_NAME, 'body')
             element[-1].send_keys(Keys.END)
             # Define o tamanho de rolagem
             scroll_old = scroll_height
             while True:
                 # Pega tamanho do scroll
-                scroll_height = driver.execute_script("return document.getElementsByClassName('list-entries')[0].scrollHeight")
+                scroll_height = self.driver.execute_script("return document.getElementsByClassName('list-entries')[0].scrollHeight")
                 # armazena tamanho antigo antes da rolagem
                 scroll_old = scroll_height
                 # pressiona pgup
-                element = driver.find_elements(By.TAG_NAME, 'body')
+                element = self.driver.find_elements(By.TAG_NAME, 'body')
                 element[-1].send_keys(Keys.END)
                 # Espera página carregar
                 time.sleep(SCROLL_PAUSE_TIME)
                 # Verifica se chegou no fim
-                scroll_height = driver.execute_script("return document.getElementsByClassName('list-entries')[0].scrollHeight")
+                scroll_height = self.driver.execute_script("return document.getElementsByClassName('list-entries')[0].scrollHeight")
                 if scroll_old >= scroll_height:
                     break
         except Exception as err:
-            driver.quit()
+            self.driver.quit()
             _, _, tb = sys.exc_info()
             if tb is not None:
                 # logger.error('Na linha {} -{}'.format(tb.tb_lineno,err), exc_info=True)
@@ -88,7 +88,7 @@ class AnilistGetChapsFromReader():
         # if inputs:
         #     inputs[0].send_keys('')
         #     inputs[1].send_keys('')
-        print('Vá no navegador realizei o login e resolva o captcha e clique no Login\nAguarde carregar a página inicial para continuar')
+        print('Vá no navegador realize o login e resolva o captcha e clique no Login\nAguarde carregar a página inicial para continuar')
         print('\a')
         if os.name == 'nt':
             time.sleep(1)
@@ -108,15 +108,18 @@ class AnilistGetChapsFromReader():
             for custom in custom_lists:
                 self.driver.get('https://anilist.co/settings/lists')
                 custom_list = self.driver.find_elements(By.CLASS_NAME, 'el-input__inner')
-                if custom in [x.get_attribute('value') for x in custom_list]:
+                custom_list_text = [x.get_attribute('value') for x in custom_list]
+                if custom in custom_list_text:
+                    print(f'Lista {custom} já existe')
                     continue
-                custom_list[-1].send_keys(custom)
-                add = self.driver.find_elements(By.CLASS_NAME, 'cancel')
-                add[-1].click()
-                saves = [x for x in self.driver.find_elements(By.CLASS_NAME, 'button') if x.text == 'Save']
-                saves[1].click()
-                time.sleep(5)
-            print()
+                else:
+                    custom_list[-1].send_keys(custom)
+                    add = self.driver.find_elements(By.CLASS_NAME, 'cancel')
+                    add[-1].click()
+                    saves = [x for x in self.driver.find_elements(By.CLASS_NAME, 'button') if x.text == 'Save']
+                    saves[1].click()
+                    print(f'Lista {custom} criada')
+                    time.sleep(5)
 
         except Exception as err:
             self.driver.quit()
@@ -174,12 +177,12 @@ class AnilistGetChapsFromReader():
             site = None
             return mangas[0]
 
-    def get_mangas_anilist(self, username):
+    def get_mangas_anilist(self, username:str):
         # INICIA buscar lista de mangas em leitura no anilist
         self.driver.get('https://anilist.co/user/{}/mangalist/Reading'.format(username))
         time.sleep(2)
-        self.scroll_to_bottom_page(self.driver)
-        site = web.web_scrap(markup=self.driver.page_source)
+        self.scroll_to_bottom_page()
+        site = self.web.web_scrap(markup=self.driver.page_source)
         # titles = site.find_all('div', class_='title')
         # titles_links = [x.a.get('href') for x in titles if x.a]
         entrys = site.find_all('div', class_='entry-card')
@@ -233,9 +236,9 @@ class AnilistGetChapsFromReader():
         # FIM obter animes do anilist
         return titles_links
 
-    def set_list_anilist(self, manga_name, manga_url, no_releases, new_release, finish):
+    def set_list_anilist(self, manga_name:str, manga_url:str, no_releases:bool, new_release:bool, finish:bool):
         """
-         Sets anilist in web. com and returns True if successful. Otherwise returns False
+         Adiciona manga a lista personalizada do anilist
          
          @param driver - Webdriver (navegador)
          @param manga_name - Nome do manga que será configurar
@@ -248,7 +251,7 @@ class AnilistGetChapsFromReader():
             # abre página do anime no anilist para realizar edições
             self.driver.get('https://anilist.co'+manga_url)
             time.sleep(2)
-            site = web.web_scrap(markup=self.driver.page_source)
+            site = self.web.web_scrap(markup=self.driver.page_source)
             adult = site.find('div', class_='adult-label')
             # If adult is true then adult is true.
             if adult:
@@ -369,7 +372,7 @@ class AnilistGetChapsFromReader():
                 print('Manga com erro {}'.format(manga_name))
                 print('Na linha {} -{}'.format(nline.tb_lineno,err))
 
-    def set_list_anilist_mangaschan(self, driver, mangas_list):
+    def set_list_anilist_mangaschan(self, mangas_list:dict):
         try:
             mangas_not_found = {}
             needs_check = False
@@ -387,7 +390,8 @@ class AnilistGetChapsFromReader():
                     finish_chap_anilist = None
 
                 checked = False
-                
+                url_agregador = cnst.AGREGADOR_MANGA.get('MANGASCHAN')
+                url_search_agregador = f'{url_agregador[0]}{url_agregador[1]}'
                 # pesquisa anime atual no mangas chan
                 while True:
                     manga = self.search_mangaschan(manga_name, url_search_agregador)
@@ -423,14 +427,14 @@ class AnilistGetChapsFromReader():
                         if manga.a:
                             while True:
                                 try:
-                                    driver.get(f'{manga.a.get("href")}')
+                                    self.driver.get(f'{manga.a.get("href")}')
                                     break
                                 except:
                                     time.sleep(5)
-                                    driver.get(f'{manga.a.get("href")}')
+                                    self.driver.get(f'{manga.a.get("href")}')
                             
                             time.sleep(2)
-                            elements = driver.find_elements(By.XPATH, "//ul[@class='clstyle']/li")
+                            elements = self.driver.find_elements(By.XPATH, "//ul[@class='clstyle']/li")
                             if elements:    
                                 search = re.search('[0-9]+', elements[0].text)
                                 if search:
@@ -457,8 +461,9 @@ class AnilistGetChapsFromReader():
                     self.set_list_anilist( manga_name, values[0], no_releases, new_release, finish)
             t_f = self.common.finishCountTime(t_0,True)
             self.common.print_time(t_f)
+            return mangas_not_found
         except Exception as err:
-            driver.quit()
+            self.driver.quit()
             nline = sys.exc_info()[2]
             if nline:
                 print('Manga com erro {}'.format(manga_name))
@@ -501,7 +506,7 @@ class AnilistGetChapsFromReader():
                 print('Manga com erro {}'.format(manga_name))
                 print('Na linha {} -{}'.format(nline.tb_lineno,err))
 
-    def set_list_anilist_mangalivre(self, mangas_list):
+    def set_list_anilist_mangalivre(self, mangas_list:dict):
         mangas_not_found = {}
         needs_check = False
         no_releases = None
@@ -600,14 +605,10 @@ if __name__ == "__main__":
     common = Common()
     s=Service(ChromeDriverManager().install())
     web = Web()
-    os.path.join(os.path.dirname(__file__))
-    driver = webdriver.Chrome(service=s, options=web.optionsChrome(crx_extension=[os.path.join(os.path.dirname(__file__), 'extensions', 'popup_blocker.crx')]))
-    url_agregador = cnst.AGREGADOR_MANGA.get('MANGASCHAN')
-    username = agc.login_anilist(driver)
+    username = agc.login_anilist()
     # agc.set_list_anilist(driver, 'Megami no Sprinter ', '/manga/101617/Megami-no-Sprinter/', True, True, True)
-    agc.create_custom_list(driver)
+    agc.create_custom_list()
     mangas_list = {}
-    url_search_agregador = f'{url_agregador[0]}{url_agregador[1]}'
     file_anime_names = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'alt_names.txt')
     if os.path.isfile(file_anime_names):
         # ler o arquivo
@@ -626,7 +627,7 @@ if __name__ == "__main__":
 
         mangas_list = dict(sorted(mangas_list.items()))
     else:
-        mangas_list = agc.get_mangas_anilist(driver, username)
-    agc.set_list_anilist_mangalivre(driver, mangas_list)
-    mangas_not_found = agc.set_list_anilist_mangaschan(driver, mangas_list)
+        mangas_list = agc.get_mangas_anilist(username)
+    mangas_not_found = agc.set_list_anilist_mangaschan(mangas_list)
+    agc.set_list_anilist_mangalivre(mangas_list)
     
