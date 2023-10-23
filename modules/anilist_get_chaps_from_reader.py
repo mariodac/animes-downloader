@@ -39,7 +39,7 @@ file_handler.setFormatter(formatter)
 # adiciona arquivo ao manipulador de arquivo de log
 logger.addHandler(file_handler)
 # FIM configura nivel de log
-class AnilistGetChaps():
+class AnilistGetChapsFromReader():
     def __init__(self):
         self.common = Common()
         self.web = Web()
@@ -596,7 +596,7 @@ class AnilistGetChaps():
                 print('Na linha {} -{}'.format(nline.tb_lineno,err))
 
 if __name__ == "__main__":
-    agc = AnilistGetChaps()
+    agc = AnilistGetChapsFromReader()
     common = Common()
     s=Service(ChromeDriverManager().install())
     web = Web()
