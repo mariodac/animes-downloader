@@ -5,6 +5,8 @@ import urllib.parse
 sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "modules"))
 sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "utils"))
 import constants as cnst
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
 from bs4 import BeautifulSoup
 from time import sleep
 from progress.bar import ChargingBar
@@ -127,7 +129,38 @@ class Web():
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.wait_download_file.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
             sys.exit()
-            
+
+    def init_webdriver(self,default=True, headless=False, saida:os.PathLike=None):
+        try:
+            s=Service(ChromeDriverManager().install())
+            if default:
+                if headless:
+                    driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=True, download_output=saida))
+                else:    
+                    driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=False, download_output=saida))    
+            else:
+                # caminho das extensões
+                extension_path = os.path.join(os.path.split(os.path.dirname(os.path.realpath(__file__)))[0], 'extensions')
+                extension = []
+                # extension = [os.path.join(extension_path, 'adblock.crx'), os.path.join(extension_path, 'enable_right_click.crx')]
+                # extension = [os.path.join(extension_path, 'enable_right_click.crx')]
+                try:
+                    if headless:
+                        driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=True, download_output=saida, crx_extension=extension))
+                    else:
+                        driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=False, download_output=saida, crx_extension=extension))
+                except:
+                    if headless:
+                        driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=True, download_output=saida))
+                    else:
+                        driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=False, download_output=saida))
+            return driver
+        except:
+            exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.init_webdriver.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
+            sys.exit()
+
     def optionsChrome(self, headless=False, download_output=None, crx_extension:list=None):
         # Criar uma instância dr opções Chrome e devolvê-lo. Esta é a primeira chamada que você quer executar
         try:

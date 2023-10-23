@@ -8,13 +8,10 @@ import pygetwindow as gw
 sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "utils"))
 sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "modules"))
 import constants as cnst
-from unidecode import unidecode
 from time import sleep
 from web import Web
 from common import Common
 from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
@@ -28,36 +25,6 @@ class DownloaderAnime():
     def __init__(self):
         self.web = Web()
         self.common = Common()
-        
-    def init_webdriver(self,default=True, headless=False, saida:os.PathLike=None):
-        try:
-            s=Service(ChromeDriverManager().install())
-            if default:
-                if headless:
-                    driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=True, download_output=saida))
-                else:    
-                    driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=False, download_output=saida))    
-            else:
-                extension_path = os.path.join(os.path.split(os.path.dirname(os.path.realpath(__file__)))[0], 'extensions')
-                extension = []
-                # extension = [os.path.join(extension_path, 'adblock.crx'), os.path.join(extension_path, 'enable_right_click.crx')]
-                # extension = [os.path.join(extension_path, 'enable_right_click.crx')]
-                try:
-                    if headless:
-                        driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=True, download_output=saida, crx_extension=extension))
-                    else:
-                        driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=False, download_output=saida, crx_extension=extension))
-                except:
-                    if headless:
-                        driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=True, download_output=saida))
-                    else:
-                        driver = webdriver.Chrome(service=s, options=self.web.optionsChrome(headless=False, download_output=saida))
-            return driver
-        except:
-            exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
-            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.init_webdriver.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
-            sys.exit()
 
     def download_animes_episodes_fenix(self, url:str, save_path:os.PathLike):
         try:
@@ -85,7 +52,7 @@ class DownloaderAnime():
             file_get = open(file_name, 'r+', encoding='utf-8')
             texts_file = file_get.readlines()
             texts_file = [x.replace('\n', '') for x in texts_file]
-            driver = self.init_webdriver(True, saida=saida)
+            driver = self.web.init_webdriver(True, saida=saida)
             for index,link in enumerate(links):
                 print("Baixando episodio {} de {}".format(index+1, len(links)))
                 driver.get(link)
@@ -131,7 +98,7 @@ class DownloaderAnime():
     def login_saiko(self, save_path, web_driver:webdriver=None):
         try:
             if web_driver is None:
-                    driver = self.init_webdriver(headless=False, save_path=save_path)
+                    driver = self.web.init_webdriver(headless=False, save_path=save_path)
             # acessa url de login da saiko
             driver.get("{}login".format(cnst.SAIKO_URL))
             sleep(3)
@@ -196,7 +163,7 @@ class DownloaderAnime():
         try:
             # Iniciar o driver web. Se nenhum driver web estiver configurado, o driver web padrão é usado.
             if web_driver is None:
-                driver = self.init_webdriver(headless=False, saida=save_path)
+                driver = self.web.init_webdriver(headless=False, saida=save_path)
             else:
                 driver = web_driver
             sleep(4)
@@ -254,7 +221,7 @@ class DownloaderAnime():
     def down_episodes_saiko(self,save_path:os.PathLike, url:str=None, web_driver:webdriver=None, name:str=None, limit:int=1):
         try:
             if webdriver is None:
-                driver = self.init_webdriver(default=False,headless=False, saida=save_path)
+                driver = self.web.init_webdriver(default=False,headless=False, saida=save_path)
                 driver.get(url)
             else:
                 driver = web_driver
@@ -438,7 +405,7 @@ class DownloaderAnime():
                     # site = self.web.web_scrap(url=qualidades[index-1])
                     status = self.web.download_archive(url=qualidades[index-1].get('href'), path_archive=dest_dir)
                     if status is False:
-                        driver = self.init_webdriver(default=False)
+                        driver = self.web.init_webdriver(default=False)
                         sleep(3)
                         self.web.check_driver(driver)
                         driver.get(ep.get('href'))
