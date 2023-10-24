@@ -189,3 +189,4 @@ cython_debug/
 *_teste*
 
 alt_names.txt
+output/
