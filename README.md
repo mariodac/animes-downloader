@@ -8,9 +8,9 @@ Projeto idealizado e desenvolvido por mim, qualquer dúvida fique a vontade para
 
 Até o momento o projeto possui três opções:
 
-1. Baixar episódios da Saiko Animes (com ou sem acesso premium) [Tutorial]("#item1")
-2. Baixar episódio da AnimeFire [Tutorial]("#item2)
-3. Atualizar listas personalizadas de mangás no anilist [Tutorial]("#item3)
+1. Baixar episódios da Saiko Animes (com ou sem acesso premium) [Tutorial](#item1)
+2. Baixar episódio da AnimeFire [Tutorial](#item2)
+3. Atualizar listas personalizadas de mangás no anilist [Tutorial](#item3)
 
 ## Tecnologias utilizadas
 
