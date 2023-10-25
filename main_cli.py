@@ -76,7 +76,7 @@ if __name__ == "__main__":
         elif option == 3:
             anilist_get_chaps_from_reader = AnilistGetChapsFromReader()
             t_i = common.initCountTime(True)
-            print('Iniciado opção Baixar episódios AnimeFire.net em {}'.format(common.timestamp()))
+            print('Iniciado opção Atualizar Anilist em {}'.format(common.timestamp()))
             username = anilist_get_chaps_from_reader.login_anilist()
             # anilist_get_chaps_from_reader.set_list_anilist(driver, 'Megami no Sprinter ', '/manga/101617/Megami-no-Sprinter/', True, True, True)
             anilist_get_chaps_from_reader.create_custom_list()
