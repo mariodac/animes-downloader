@@ -8,8 +8,9 @@ if [ $PYTHON ]; then
     env/bin/activate
     env/bin/pip install -r requirements.txt
     env/bin/pip install wxPython
+    env/bin/python main_CLI.py
 elif [ $PYTHON3 ]; then
-	python3 -m venv env
+	env/bin/python main_CLI.py
 else
 	echo "sem python"
 fi
