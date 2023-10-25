@@ -19,7 +19,7 @@ Até o momento o projeto possui três opções:
   <img align="center" alt="Selenium" height="30" width="40" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/selenium/selenium-original.svg">
 </div><br>
 
-Baixe seu executável [aqui](https://github.com/mariodac/animes-downloader/releases/download/beta/beta_teste_CLI.exe)
+### Baixe seu executável [aqui](https://github.com/mariodac/animes-downloader/releases/download/beta/beta_teste_CLI.exe)
 
 
 ## Dependências
