@@ -19,7 +19,7 @@ Até o momento o projeto possui três opções:
   <img align="center" alt="Selenium" height="30" width="40" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/selenium/selenium-original.svg">
 </div><br>
 
-<a id="item1"></a>
+
 
 ## Dependências
 
@@ -31,6 +31,7 @@ Caso queira não queira fazer o passos a seguir manualmente. Apenas execute o [S
 
 É recomendado a criação de ambiente virtual para execução do projeto, recomendo seguir os passos a seguir:
 
+<a id="ancora1"></a>
 
 No linux:
 - Para criação do ambiente:
@@ -157,7 +158,7 @@ Foi configurado o seguinte esquema para seleção dos episódios:
 **OBSERVAÇÃO:** Em certos animes, devido utilizar um player antigo, o script abrirá o navegador e realizara o download pelo navegador, é importantissímo que não meche no PC nesse momento pois pode acabar atrapalhando
 
 
-<a id="item1"></a>
+<a id="item3"></a>
 
 ## Atualizar listas personalizadas de mangás no anilist
 
