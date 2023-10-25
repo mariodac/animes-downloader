@@ -328,19 +328,21 @@ class DownloaderAnime():
             site = self.web.web_scrap(url='{}pesquisar/{}'.format(cnst.ANIMEFIRENET_URL, search))
             # obtem resultados da busca
             articles = site.find_all('article')
-            print("A pesquisa obteu os seguintes animes:")
             # imprime nomes dos animes da busca
-            if len(articles) > 0:
+            if len(articles) == 1:
+                index = 1
+            elif len(articles) > 0:
+                print("A pesquisa obteu os seguintes animes:")
                 animes = [x.h3.text for x in articles if x.h3]
                 index = self.get_anime_index(animes)
                 # obtem o link do anime e o seu nome
-                if index in range(1, len(articles) + 1):
-                    link = articles[index-1].a.get('href')
-                    anime_name = articles[index-1].h3.text      
-                return link, anime_name
             else:
                 print("Nenhum anime encontrado")
                 return None, None
+            if index in range(1, len(articles) + 1):
+                link = articles[index-1].a.get('href')
+                anime_name = articles[index-1].h3.text      
+            return link, anime_name
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -432,7 +434,7 @@ class DownloaderAnime():
                     # download normal
                     else:
                         print("Sucesso")
-            driver.quit()
+                driver.quit()
                                 
                                 
                             
