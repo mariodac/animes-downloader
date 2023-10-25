@@ -81,7 +81,7 @@ if __name__ == "__main__":
             # anilist_get_chaps_from_reader.set_list_anilist(driver, 'Megami no Sprinter ', '/manga/101617/Megami-no-Sprinter/', True, True, True)
             anilist_get_chaps_from_reader.create_custom_list()
             mangas_list = {}
-            file_anime_names = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'alt_names.txt')
+            file_anime_names = os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt')
             if os.path.isfile(file_anime_names):
                 # ler o arquivo
                 with open(file_anime_names, 'r', encoding='utf-8') as file_txt:

@@ -228,10 +228,11 @@ class AnilistGetChapsFromReader():
         t_f = self.common.finishCountTime(t_0,True)
         self.common.print_time(t_f)
         # Salvar o arquivo 
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'alt_names.txt'), 'w', encoding='utf-8') as file_txt:
+        out_file = os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt')
+        with open(out_file, 'w', encoding='utf-8') as file_txt:
             for item in titles_links:
                 file_txt.write(f"{item} -- {' || '.join(titles_links[item][:-1])} || {' || '.join(titles_links[item][-1])}\n")
-        print(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'alt_names.txt'))
+        print(f"Arquivo salvo em {out_file}")
         # print(titles_links)
         # FIM obter animes do anilist
         return titles_links
@@ -609,7 +610,7 @@ if __name__ == "__main__":
     # agc.set_list_anilist(driver, 'Megami no Sprinter ', '/manga/101617/Megami-no-Sprinter/', True, True, True)
     agc.create_custom_list()
     mangas_list = {}
-    file_anime_names = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'alt_names.txt')
+    file_anime_names = os.path.join(os.path.join(os.environ['USERPROFILE'], 'Documents'))
     if os.path.isfile(file_anime_names):
         # ler o arquivo
         with open(file_anime_names, 'r', encoding='utf-8') as file_txt:
