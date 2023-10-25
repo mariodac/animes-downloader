@@ -171,13 +171,27 @@ Nesta função é feita uma automação no navegador para criar listas personali
 
 **OBSERVAÇÃO**: É indispensável criar as listas com outros nomes, recomendo, recomendo a criação manual das listas.
 
+Para o tutorial em vídeo acesse [aqui](https://www.youtube.com/watch?v=o7lu4Tc5kCM)
+
 Inicialmente selecione a opção corresponte a está função:
 
  ![Print](https://github.com/mariodac/animes-downloader/blob/main/.imagens/Screenshot_8.png?raw=true)
 
  Após irá iniciar o chrome, e o terminal ficará pausado, vá para o chrome que acabou de abrir e realize o login e aguarde a tela inicial do anilist, após realizado isso volte para o terminal e apenas pressione qualquer tecla para continuar.
 
-Como isso será iniciado a captura da lista dos mangás que estão na sua lista "Reading" e captura dos nomes alternativos, este processo demora um pouco, mas no final é criado um arquivo chamado "alt_names.txt", que será utilizado para pular esta etapa de captura dos nomes dos mangás. 
+Como isso será iniciado a captura da lista dos mangás que estão na sua lista "Reading" e captura dos nomes alternativos, este processo demora um pouco, mas no final é criado um arquivo chamado "alt_names.txt", que será utilizado para pular esta etapa de captura dos nomes dos mangás. O arquivo será salvo no caminho padrão `C:/Users/%USERNAME%/Documents`
 
-A próxima parte é onde será realizada busca do mangá no site leitor e comparado o ultimo capítulo do leitor com o ultimo capítulo atualizado no anilist, caso o mangá esteja com o mesmo número de capítulo tanto no anilis quanto no leitor será adicionado na lista "Waiting New Chaps Releases", caso o mangá esteja com o número de capítulo no leitor maior que o do anilist será adicionado na lista "New Chaps Releases", caso o mangá esteja finalizado no anilist e no leitor será adicionado na lista "Finishe Releases".
+A próxima parte é onde será realizada busca do mangá no site leitor e comparado o ultimo capítulo do leitor com o ultimo capítulo atualizado no anilist, caso o mangá esteja com o mesmo número de capítulo tanto no anilis quanto no leitor será adicionado na lista "Waiting New Chaps Releases", caso o mangá esteja com o número de capítulo no leitor maior que o do anilist será adicionado na lista "New Chaps Releases", caso o mangá esteja finalizado no anilist e no leitor será adicionado na lista "Finished Releases".
+
+Após finalizado basta fechar o terminal, mas antes de fechar verificar as mensagens do terminal
+
+![Print](https://github.com/mariodac/animes-downloader/blob/main/.imagens/Screenshot_11.png?raw=true)
+
+Como podemos ver no print, teve mangá com erro, onde seria que ocorreu algum erro durante a execução, teve mangá não encontrado, onde mesmo com os nomes alternativos não foi possível encontrar no mangas chan. Para melhorar as chances de encotrar deve editar o arquivo alt_names.txt e adicionar mais nomes alternativos.
+
+![Print](https://github.com/mariodac/animes-downloader/blob/main/.imagens/Screenshot_10.png?raw=true)
+
+Nesse arquivo cada linha, representa um mangá, onde primeiro vem o nome principal após o "--" vem o link dele no anilist após "||" vem o capitulo e após cada "||" vem os nomes alternativos, por exemplo para adicionar mais nomes alternativos, basta no final da linha, adicionar um espaço seguido de || e mais um espaço seguido do nome alternativo ficando assim:
+
+`Jiken-Jaken! -- /manga/101613/JikenJaken/ || 20/92 || Jiken-Jaken! || JikenJaken || Jiken Jaken`
 
