@@ -24,7 +24,7 @@ Até o momento o projeto possui três opções:
 
 ## Dependências
 
-Caso queira não queira fazer o passos a seguir manualmente. Apenas execute o [Script Windows](start_CLI.bat) ou [Script Linux](start_CLI.sh)
+Caso não queira fazer o passos a seguir manualmente. Apenas execute o [Script Windows](start_CLI.bat) ou [Script Linux](start_CLI.sh)
 
 
 É necessário ter o seguinte item para executar o projeto:
@@ -107,7 +107,47 @@ Nesta função é feita uma automação no navegador para baixar os episódios d
 
 ### Tutorial
 
- O caminho padrão onde será salvo os vídeos é `C:/Users/%USERNAME%/Videos`
+Após executar o projeto, escolha o numero correspondente a esta função
+
+![Print](https://github.com/mariodac/animes-downloader/blob/main/.imagens/Screenshot_13.png?raw=true)
+
+Em seguida será solicitado se deseja realizar o login. Sendo S ou s para sim e N ou n para não
+
+![Print](https://github.com/mariodac/animes-downloader/blob/main/.imagens/Screenshot_14.png?raw=true)
+
+Lembrando que é apenas necessário login caso tenha pago o Saikô pass na sua conta.
+
+Caso escolha para realizar o login, o navegador será aberto, mas preencha suas credencias diretamente no terminal.
+
+![Print](https://github.com/mariodac/animes-downloader/blob/main/.imagens/Screenshot_15.png?raw=true)
+
+Após realizar o login, ou caso tenha escolhido não realizar login, será solicitado o nome do anime a ser pesquisado no site.
+
+![Print](https://github.com/mariodac/animes-downloader/blob/main/.imagens/Screenshot_16.png?raw=true)
+
+Quando a pesquisa retornar mais de um resultado será solicitado digitar o numero correspondente ao resultado.
+
+![Print](https://github.com/mariodac/animes-downloader/blob/main/.imagens/Screenshot_17.png?raw=true)
+
+Depois de selecionar qual resultado corresponde a sua pesquisa ou caso sua pesquisa retorna apenas 1 resultado, será exibido a lista de episódios, e solicitado que digite o intervalo de episódios que deseja baixar:
+
+![Print](https://github.com/mariodac/animes-downloader/blob/main/.imagens/Screenshot_18.png?raw=true)
+
+Foi configurado o seguinte esquema para seleção dos episódios:
+
+ - Caso deseje baixar apenas 1 episódio, digite apenas o número do episódio desejado, por exemplo, para baixar o episódio 1, basta digitar 1
+ - Caso deseje baixar um intervalo de episódios, digite o número inicial seguido do - e após o número final, por exemplo, para baixar do episódio 1 até 10, basta digitar 1-10
+ - Caso deseja baixar todos os episódios, basta digitar *
+
+Após selecionar o intervalo de episódios desejado, o download será iniciado no navegador
+
+![Print](https://github.com/mariodac/animes-downloader/blob/main/.imagens/Screenshot_19.png?raw=true)
+
+Após encerrado o download será exibido o tempo de execução para realizar os downloads
+
+![Print](https://github.com/mariodac/animes-downloader/blob/main/.imagens/Screenshot_20.png?raw=true)
+
+O caminho padrão onde será salvo os vídeos é `C:/Users/%USERNAME%/Videos`
 
 
 <a id="item2"></a>
@@ -196,3 +236,6 @@ Nesse arquivo cada linha, representa um mangá, onde primeiro vem o nome princip
 
 `Jiken-Jaken! -- /manga/101613/JikenJaken/ || 20/92 || Jiken-Jaken! || JikenJaken || Jiken Jaken`
 
+Com isso terá sua biblioteca muita mais organizada de maneira automática!
+
+![Print](https://github.com/mariodac/animes-downloader/blob/main/.imagens/Screenshot_12.png?raw=true)
