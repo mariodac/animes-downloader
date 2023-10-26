@@ -21,28 +21,18 @@ Até o momento o projeto possui três opções:
 
 ### Baixe seu executável [aqui](https://github.com/mariodac/animes-downloader/releases/download/beta/beta_teste_CLI.exe)
 
-
 ## Dependências
 
-Caso não queira fazer o passos a seguir manualmente. Apenas execute o [Script Windows](start_CLI.bat) ou [Script Linux](start_CLI.sh)
-
+Caso não queira fazer o passos a seguir manualmente. Apenas execute o [Script Windows](start_CLI.bat)
 
 É necessário ter o seguinte item para executar o projeto:
-- Python 3.7+ [Linux](https://python.org.br/instalacao-linux/) | [Windows](https://www.python.org/downloads/)
+- Python 3.7+ [Windows](https://www.python.org/downloads/)
 
 É recomendado a criação de ambiente virtual para execução do projeto, recomendo seguir os passos a seguir:
 
 <a id="ancora1"></a>
 
-No linux:
-- Para criação do ambiente:
-```
-python3 -m venv env
-```
-- Para ativar o ambiente:
-```
-env/bin/activate
-```
+
 No windows:
 - Para criação do ambiente:
 ```
@@ -62,18 +52,10 @@ Para instalar as bibliotecas siga os passos:
 
 *Será criado o ambiente python*
 
-
-No Linux:
-```
-env/bin/pip install -r requirements.txt
-```
-
 No windows:
 ```
 env\Scripts\pip install -r requirements.txt
 ```
-
-
 
 ## Páginas suportadas
 
