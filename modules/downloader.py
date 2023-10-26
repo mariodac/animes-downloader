@@ -211,6 +211,7 @@ class DownloaderAnime():
                         if element[0].is_displayed():
                             print("Entrada proibido pelo seguinte motivo:")
                             print(element[0].text) 
+                            return None, None
                 else:
                     print("Opção inválida")
                 return driver, animes_names[index-1]
