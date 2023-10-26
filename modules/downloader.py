@@ -2,7 +2,6 @@ import sys
 import os
 import re
 import shutil
-import wx
 import pyautogui
 import pygetwindow as gw
 sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "utils"))
@@ -528,25 +527,7 @@ if __name__ == "__main__":
     url, name = downloader.get_anime_animefire_net("Naruto Shippuuden")
     downloader.down_episodes_animefire_net(url, name, r'C:\Users\bros_\Videos')
     
-    while True:
-        # cria instancia da tela que não tera um pai (janela principal)
-        app = wx.App(None)
-        # cria um objeto de dialog de diretório sem um pai
-        dialog = wx.DirDialog (None, "Escolha um diretório para salvar os animes", "", wx.DD_DEFAULT_STYLE | wx.DD_DIR_MUST_EXIST)
-        #verifica se o usuário clicou em ok
-        if dialog.ShowModal() == wx.ID_OK: 
-            # diretorio selecionado para criar diretório onde salvar imagens
-            save_path = dialog.GetPath()
-            break
-        if dialog.ShowModal() == wx.ID_CLOSE_FRAME:
-            print("Escolha o diretorio")
-            continue 
-        else:
-            print("Escolha o diretorio")
-
-        # destroi os objetos para liberar a memória
-        dialog.Destroy()
-        app.Destroy()
+    save_path = ""
     
     option = -1
     list_episodes = []
