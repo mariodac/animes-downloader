@@ -18,24 +18,46 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
 import getpass
 
-
-
 class DownloaderAnime():
-    def __init__(self):
+    "teste de classe"
+    def __init__(self, save_path:str):
+        """
+        Classe para funções de baixar animes
+        
+        Iniciar as variáveis de classe e criar instâncias de classes Web e Common.
+
+        Args:
+            save_path (str): caminho para salvar episódios de animes
+        """
         self.web = Web()
         self.common = Common()
+        self.save_path = save_path
+        self.web_driver = self.web.init_webdriver(default=False, saida=self.save_path)
 
-    def download_animes_episodes_fenix(self, url:str, save_path:os.PathLike):
+    def __del__(self):
+        """Função destrutora, fecha o navegador
+        """
+        self.web.try_quit_webdriver(self.web_driver)
+
+    def download_animes_episodes_fenix(self, url:str):
+        """Download de episódios de animes do site fenixfansublix
+
+        Args:
+            url (str): url do animes
+            save_path (str): local para salvar videos do episódios
+        """
         try:
-            
+            # obtem dados da url
             site = self.web.webScraping(url=url)
+            # Obtem o nome do anime e criar um diretorio com o nome
             episodes = site.find_all('div', class_='ep d-flex')
             series = site.find('span', class_='cat-series')
             if series:
                 name = series.next_sibling
                 name = name.strip()
                 name = re.sub(r'[\\/:"*?!<>|]+', '', name)
-                saida = self.common.create_folder(name, save_path)
+                saida = self.common.create_folder(name, self.save_path)
+            # Obtem os episódios do anime
             links = []
             for item in episodes:
                 if item.find('a', title="mfire"):
@@ -43,7 +65,9 @@ class DownloaderAnime():
             if links is None:
                 print("Impossível baixar episódios")
                 return
+            # filtra pelas url dos episódios
             links = [x.get('href') for x in links]
+            # monta caminho do arquivo
             file_name = r'{}/{}.txt'.format(saida.replace("\\", r"/"), name)
             if not os.path.isfile(file_name):
                 file_get = open(file_name, 'x', encoding='utf-8')
@@ -51,12 +75,12 @@ class DownloaderAnime():
             file_get = open(file_name, 'r+', encoding='utf-8')
             texts_file = file_get.readlines()
             texts_file = [x.replace('\n', '') for x in texts_file]
-            driver = self.web.init_webdriver(True, saida=saida)
+            self.web_driver = self.web.init_webdriver(True, saida=saida)
             for index,link in enumerate(links):
                 print("Baixando episodio {} de {}".format(index+1, len(links)))
-                driver.get(link)
+                self.web_driver.get(link)
                 # obtem site de download
-                site = self.web.webScraping(markup=driver.page_source)
+                site = self.web.webScraping(markup=self.web_driver.page_source)
                 # busca elemento
                 elements = site.find('font', text="Name:")
                 if elements:
@@ -79,7 +103,7 @@ class DownloaderAnime():
                         print("Arquivo {} não disponível neste link {}".format(file_name, link))
                         continue
                 try:
-                    new_link = driver.find_element(By.ID, 'dlbutton')
+                    new_link = self.web_driver.find_element(By.ID, 'dlbutton')
                 except:
                     new_link = None
                 if new_link:
@@ -88,91 +112,92 @@ class DownloaderAnime():
                 if file_down:
                     file_get.write('{} - {}\n'.format(link, file_down))
             file_get.close() 
-            driver.quit()
         except:
             exc_type,exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('ERRO DURANTE EXECUÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.download_animes_episodes_fenix.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
 
-    def login_saiko(self, save_path, web_driver:webdriver=None):
+    def login_saiko(self,):
+        """Realiza o login no site Saiko Animes
+        """
         try:
-            if web_driver is None:
-                    web_driver = self.web.init_webdriver(headless=False, saida=save_path)
             # acessa url de login da saiko
-            web_driver.get("{}login".format(cnst.SAIKO_URL))
+            self.web_driver.get("{}login".format(cnst.AGREGADOR_ANIME.get('saiko')))
             sleep(3)
             # busca elemento de login
-            elements = web_driver.find_elements(By.NAME, 'user_login')
+            elements = self.web_driver.find_elements(By.NAME, 'user_login')
             if elements:
                 # obtem email digitado pelo usuário e envia para o elemento
                 elements[0].send_keys(input('Digite seu email >> '))
                 # busca elemento de senha
-                elements = web_driver.find_elements(By.NAME, 'user_pass')
+                elements = self.web_driver.find_elements(By.NAME, 'user_pass')
                 if elements:
                     # envia senha digitada pelo usuário e envia para o elemento
                     elements[0].send_keys(getpass.getpass())
                     # busca pelo botão de login
-                    elements = web_driver.find_elements(By.NAME, 'armFormSubmitBtn')
+                    elements = self.web_driver.find_elements(By.NAME, 'armFormSubmitBtn')
                     if elements:
                         elements[0].click()
                         # buscar elemento do avatar para verificar se logou com sucesso
-                        elements = web_driver.find_elements(By.CSS_SELECTOR, '.avatar-content')
+                        elements = self.web_driver.find_elements(By.CSS_SELECTOR, '.avatar-content')
                         if elements:
                             print("Login efetuado com sucesso")
                         
             sleep(4)
-            return web_driver
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.login_saiko.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
             
-    def logout_saiko(self, web_driver:webdriver):
+    def logout_saiko(self):
+        """Realiza logout do site Saiko Animes
+        """        
         try:
             # busca elemento do avatar
-            elements = web_driver.find_elements(By.ID, 'btn2')
+            elements = self.web_driver.find_elements(By.ID, 'btn2')
             if elements:
                 # clica no elemento
                 elements[0].click()
                 sleep(2)
                 # busca o elemento de logout
-                elements = web_driver.find_elements(By.CLASS_NAME, 'logout-btn')
+                elements = self.web_driver.find_elements(By.CLASS_NAME, 'logout-btn')
                 if elements:
                     elements[0].click()
                     # buscar elemento do avatar para verificar se deslogou com sucesso
-                    elements = web_driver.find_elements(By.CSS_SELECTOR, '.avatar-content')
+                    elements = self.web_driver.find_elements(By.CSS_SELECTOR, '.avatar-content')
                     if len(elements) == 0:
                         print("Logout efetuado com sucesso")
 
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-            print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.get_anime_saiko.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
+            print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.logout_saiko.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
 
-    def get_anime_saiko(self, search:str, save_path, web_driver:webdriver=None):
+    def get_anime_saiko(self, search:str):
         """
-         Esta é uma função de web scrap para obter a lista de animações e seus nomes
-         
-         @param search - Uma termo para procurar
-         @param save_path - Caminho para salvar os animes.
-         @param web_driver - Selenium webdriver para usar se None novo será criado
-         
-         @return Instancia do driver e nome do anime escolhido
+        Obter o anime de uma pesquisa
+
+        Realiza a pesquisa digitada pelo usuário, retorna o nome do anime escolhido
+
+        Args:
+            search (str): Anime a ser pesquisado
+
+        Returns:
+            str: nome do anime escolhido
         """
         try:
-            # Iniciar o driver web. Se nenhum driver web estiver configurado, o driver web padrão é usado.
-            if web_driver is None:
-                driver = self.web.init_webdriver(headless=False, saida=save_path)
-            else:
-                driver = web_driver
             sleep(4)
-            driver.get("{}multimidia/?fwp_pesquisa={}".format(cnst.SAIKO_URL,search))
-            site = self.web.web_scrap(markup=driver.page_source)
+            self.web_driver.get("{}multimidia/?fwp_pesquisa={}".format(cnst.AGREGADOR_ANIME.get('saiko'),search))
+            site = self.web.web_scrap(markup=self.web_driver.page_source)
             # Lista de animes
             animes = site.find_all("div", "anilist")
             animes_names = []
             for item in animes:
-                name = item.find("div", class_="title-list").text
+                name = item.find("div", class_="title-list")
+                if name:
+                    name = name.text
+                else:
+                    name = "None"
                 # Obtem o nome do anime
                 if name:
                     audio = item.find('div', class_='audio-list')
@@ -191,64 +216,67 @@ class DownloaderAnime():
                 index = self.get_anime_index(animes_names)
             else:
                 print("Não foi encontrado nenhum resultado")
-                return None,  None
+                return None
             # Obter o índice do elemento da lista de anime
             if index in range(1, len(animes_names) + 1):
-                driver.get(animes[index-1].a.get('href'))
-                element = driver.find_elements(By.CLASS_NAME, 'info')
+                self.web_driver.get(animes[index-1].a.get('href'))
+                element = self.web_driver.find_elements(By.CLASS_NAME, 'info')
                 # Verificar se anime está com acesso bloqueado
                 if element:
                     sleep(3)
-                    actions = ActionChains(driver)
+                    actions = ActionChains(self.web_driver)
                     actions.move_to_element(element[0]).perform()
                     element[0].click()
                     sleep(3)
-                    element = driver.find_elements(By.ID, 'blockModalLabel')
+                    element = self.web_driver.find_elements(By.ID, 'blockModalLabel')
                     # Se estiver com acesso bloqueado exibe mensagem
                     if element:
-                        # Returnar o elemento da lista de proibição pelo seguinte motivo
+                        # Retorna o elemento da lista de proibição pelo seguinte motivo
                         if element[0].is_displayed():
                             print("Entrada proibido pelo seguinte motivo:")
                             print(element[0].text) 
-                            return None, None
+                            return None
                 else:
                     print("Opção inválida")
-                return driver, animes_names[index-1]
+                return animes_names[index-1]
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.get_anime_saiko.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
             return None, None
 
-    def down_episodes_saiko(self,save_path:os.PathLike, url:str=None, web_driver:webdriver=None, name:str=None, limit:int=1):
+    def down_episodes_saiko(self, save_path,name:str, limit:int=1):
+        """Baixar episódios do site Saiko Animes
+
+        Args:
+            save_path (str,): Diretório onde irá baixar os episódios.
+            name (str): nome do anime.
+            limit (int, optional): limite de downloads. Defaults to 1.
+        """
         try:
-            if webdriver is None:
-                driver = self.web.init_webdriver(default=False,headless=False, saida=save_path)
-                driver.get(url)
-            else:
-                driver = web_driver
             sleep(3)
+            # rola pela página de episódios
             try:
                 SCROLL_PAUSE_TIME = 2
                 # Pega tamanho do scroll
-                scroll_height = driver.execute_script("return document.evaluate('//div[@class=\"list-body\"]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.scrollHeight")
+                scroll_height = self.web_driver.execute_script("return document.evaluate('//div[@class=\"list-body\"]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.scrollHeight")
                 # obtem os episódios e rola até o ultimo episódio que está visível
-                element = driver.find_elements(By.CLASS_NAME, 'container-down')
-                ActionChains(driver).move_to_element(element[-1]).perform()
+                element = self.web_driver.find_elements(By.CLASS_NAME, 'container-down')
+                ActionChains(self.web_driver).move_to_element(element[-1]).perform()
                 # Define o tamanho de rolagem
                 scroll_old = scroll_height
                 while True:
                     # Pega tamanho do scroll
-                    scroll_height = driver.execute_script("return document.evaluate('//div[@class=\"list-body\"]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.scrollHeight")
+                    scroll_height = self.web_driver.execute_script("return document.evaluate('//div[@class=\"list-body\"]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.scrollHeight")
                     # armazena tamanho antigo antes da rolagem
                     scroll_old = scroll_height
                     # obtem os episódios e rola até o ultimo episódio que está visível
-                    element = driver.find_elements(By.CLASS_NAME, 'container-down')
-                    ActionChains(driver).move_to_element(element[-1]).perform()
+                    element = self.web_driver.find_elements(By.CLASS_NAME, 'container-down')
+                    ActionChains(self.web_driver).move_to_element(element[-1]).perform()
                     # Espera página carregar
                     sleep(SCROLL_PAUSE_TIME)
                     # Verifica se chegou no fim
-                    scroll_height = driver.execute_script("return document.evaluate('//div[@class=\"list-body\"]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.scrollHeight")
+                    scroll_height = self.web_driver.execute_script("return document.evaluate('//div[@class=\"list-body\"]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue.scrollHeight")
                     if scroll_old >= scroll_height:
                         break
             except Exception as err:
@@ -258,7 +286,7 @@ class DownloaderAnime():
             # define a quantidade de downloads a ser realizada
             downloads_count = 1
             # obtem itens da tabela
-            lines_table = driver.find_elements(By.CLASS_NAME, 'container-down')
+            lines_table = self.web_driver.find_elements(By.CLASS_NAME, 'container-down')
             # classificar lista de objetos com base em atributo do objeto
             lines_table = sorted(lines_table, key=lambda x: x.text, reverse=False)
             # ignora as linhas da tabela com os nomes das colunas
@@ -289,14 +317,15 @@ class DownloaderAnime():
                     if os.path.isdir(new_dest_dir) is False:
                         dir_name = self.common.create_folder(name, save_path)
                 # clica no episodio
-                actions = ActionChains(driver)
+                actions = ActionChains(self.web_driver)
                 actions.move_to_element(item).perform()
                 item.click()
                 sleep(2)
                 name_log = item.text.split('\n')[0]
                 print('Iniciado download {}'.format(name_log))
-            self.web.check_crdownload(save_path)
+                self.web.check_crdownload(save_path)
             downs = os.listdir(save_path)
+            # move arquivo baixados para o diretório do anime
             if dir_name:
                 for item in downs:
                     if os.path.isfile(os.path.join(save_path, item)):
@@ -309,36 +338,39 @@ class DownloaderAnime():
                     if os.path.isfile(os.path.join(save_path, item)):
                         print(os.path.join(save_path, item), "->", os.path.join(new_dest_dir, item))
                         shutil.move(os.path.join(save_path, item), new_dest_dir)
-            # logout = input("Deseja realizar o logout? (S)sim/(n)não\n-> ")
-            # if 's' in logout.lower() or 'sim' in logout.lower() or 'si' in logout.lower() or 'yes' in logout.lower() or 'y' in logout.lower():
-            self.logout_saiko(driver)
-            driver.quit()
+            self.logout_saiko()
         except Exception as err:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.down_episodes_saiko.__name__,exc_type, fname, exc_tb.tb_lineno, err))
-            if driver:
-                driver.quit()
     
     def get_anime_animefire_net(self, search:str):
+        """Baixar animes do site animesfire.net
+
+        Args:
+            search (str): _description_
+
+        Returns:
+            str, str: link do anime e nome do anime
+        """
         try:
             # formata busca para forma utilizada na url
             search = search.replace(' ', '-')
             search = search.lower()
-            site = self.web.web_scrap(url='{}pesquisar/{}'.format(cnst.ANIMEFIRENET_URL, search))
+            site = self.web.web_scrap(url='{}pesquisar/{}'.format(cnst.AGREGADOR_ANIME.get("animefire.net"), search))
             # obtem resultados da busca
             articles = site.find_all('article')
-            # imprime nomes dos animes da busca
+            # imprime nomes dos animes da busca e solicita a entrada do usuário
             if len(articles) == 1:
                 index = 1
             elif len(articles) > 0:
                 print("A pesquisa obteu os seguintes animes:")
                 animes = [x.h3.text for x in articles if x.h3]
                 index = self.get_anime_index(animes)
-                # obtem o link do anime e o seu nome
             else:
                 print("Nenhum anime encontrado")
                 return None, None
+            # obtem o link do anime e o seu nome
             if index in range(1, len(articles) + 1):
                 link = articles[index-1].a.get('href')
                 anime_name = articles[index-1].h3.text      
@@ -348,8 +380,16 @@ class DownloaderAnime():
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.get_anime_animefire_net.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
      
-    def down_episodes_animefire_net(self, url:str, anime_name:str, save_path:os.PathLike):
+    def down_episodes_animefire_net(self, url:str, anime_name:str, save_path:str):
+        """Baixar episódios de anime do site AnimeFire.net
+
+        Args:
+            url (str): URL do anime 
+            anime_name (str): Nome do anime
+            save_path (str): Diretório onde irá baixar os episódios
+        """
         try:
+            # cria diretorio com o nome do anime
             dest_dir = self.common.create_folder(anime_name, save_path)
             site = self.web.web_scrap(url=url)
             # obtem lista com os episódios
@@ -373,28 +413,28 @@ class DownloaderAnime():
                     # site = self.web.web_scrap(url=qualidades[index-1])
                     status = self.web.download_archive(url=qualidades[index-1].get('href'), path_archive=dest_dir)
                     if status is False:
-                        driver = self.web.init_webdriver(default=False)
+                        self.web_driver = self.web.init_webdriver(default=False)
                         sleep(3)
-                        self.web.check_driver(driver)
-                        driver.get(ep.get('href'))
-                        site = self.web.web_scrap(markup=driver.page_source)
+                        self.web.check_driver(self.web_driver)
+                        self.web_driver.get(ep.get('href'))
+                        site = self.web.web_scrap(markup=self.web_driver.page_source)
                         iframe = site.find_all('iframe')
                         if iframe:
                             # entra no link do iframe
-                            driver.get(iframe[0].get('src'))
+                            self.web_driver.get(iframe[0].get('src'))
                             # obtem o botão do video e clica
-                            elements = driver.find_elements(By.CLASS_NAME, 'play-button')
+                            elements = self.web_driver.find_elements(By.CLASS_NAME, 'play-button')
                             if elements:
                                 elements[0].click()
                                 sleep(3)
-                                new_iframe = driver.find_elements(By.ID, 'videocontainer')
+                                new_iframe = self.web_driver.find_elements(By.ID, 'videocontainer')
                                 if new_iframe:
                                     # troca pra o iframe
-                                    driver.switch_to.frame(new_iframe[0])
-                                    site = self.web.web_scrap(markup=driver.page_source)
+                                    self.web_driver.switch_to.frame(new_iframe[0])
+                                    site = self.web.web_scrap(markup=self.web_driver.page_source)
                                     video = site.find('video')
-                                    driver.get(video.get('src'))
-                                    video = driver.find_elements(By.TAG_NAME, 'video')
+                                    self.web_driver.get(video.get('src'))
+                                    video = self.web_driver.find_elements(By.TAG_NAME, 'video')
                                     if video:
                                         video[0].click()
                                         # obtem a localização do video na tela
@@ -402,7 +442,7 @@ class DownloaderAnime():
                                         x = localizacao['x']
                                         y = localizacao['y']
                                         # Obter o titulo da janela do WebDriver
-                                        window_title = driver.current_url+' - Google Chrome'
+                                        window_title = self.web_driver.current_url+' - Google Chrome'
                                         window_index = gw.getAllTitles().index(window_title)
                                         # Obter o objeto da janela usando o identificador
                                         window = gw.getWindowsWithTitle(gw.getAllTitles()[window_index])
@@ -416,12 +456,13 @@ class DownloaderAnime():
                                                 raise
                                         # clica com botão direito onde está localizado o vídeo
                                         pyautogui.click(x=x, y=y, button='right')
-                                        # pressio a seta pra baixo 4 vezes, para chegar na opção "Salvar como"
+                                        # pressiona a seta pra baixo 4 vezes, para chegar na opção "Salvar como"
                                         for x in range(0, 3):
                                             pyautogui.press('down')
                                         pyautogui.press('enter')
                                         # espera até a janela de salvar como aparecer
                                         while True:
+                                            # verifica se janela de salvar como aparece e aperta para iniciar o download
                                             if 'Salvar como' in gw.getAllTitles():
                                                 ep_name = self.common.normalize_name(ep.text)
                                                 pyautogui.typewrite(os.path.join(dest_dir, ep_name))
@@ -429,24 +470,25 @@ class DownloaderAnime():
                                                 break
                                             else:
                                                 sleep(5)
-                                                
+                                        # verifica se download encerrou
                                         self.web.check_crdownload(dest_dir)
-                    # download normal
                     else:
                         print("Sucesso")
-                driver.quit()
-                                
-                                
-                            
+            
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.down_episodes_animefire_net.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
     
-    def click_ads(self, n_clicks:int, driver:webdriver):
+    def click_ads(self, n_clicks:int):
+        """Clica nos ads para liberar conteudo
+
+        Args:
+            n_clicks (int): quantidades de cliques
+        """
         try:
             for x in range(0, n_clicks):
-                driver.find_elements(By.TAG_NAME, 'body')[0].click()
+                self.web_driver.find_elements(By.TAG_NAME, 'body')[0].click()
                 sleep(1)
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
@@ -454,6 +496,15 @@ class DownloaderAnime():
             print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.click_ads.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
     
     def select_range_episodes(self, select_eps:str, lista_eps:list):
+        """obtem o quais episódios serão baixados
+
+        Args:
+            select_eps (str): intervalo de episódios
+            lista_eps (list): Lista de episódeios
+
+        Returns:
+            list: lista de episódios a ser baixados
+        """
         try:
             if '-' in select_eps:
                 nums = [int(x)-1 for x in select_eps.split('-')]
@@ -473,11 +524,19 @@ class DownloaderAnime():
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.select_range_episodes.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
     
-    def get_anime_index(self, animes:list):
+    def get_anime_index(self, items:list):
+        """Exibe itens da lista e solicita a escolha para o usuário
+
+        Args:
+            items (list): Items a ser exibidos
+
+        Returns:
+            int: escolha do usuário
+        """
         try:
-            for index, item in enumerate(animes):
+            for index, item in enumerate(items):
                 print("{} - {}".format(index+1, item))
-            index = self.common.only_read_int("Digite o numero correspondente ao anime >> ")
+            index = self.common.only_read_int("Digite o numero correspondente a uma opção>> ")
             return index
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
@@ -485,6 +544,14 @@ class DownloaderAnime():
             print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.get_anime_index.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
             
     def get_anime_ep_index(self, episodes:list):
+        """Exibe lista de episódios do anime e solicita o intervalo de episódios a ser baixar
+
+        Args:
+            episodes (list): Lista de episódios
+
+        Returns:
+            int: Intervalo de episódios escolhidos
+        """
         try:
             while True:
                 for index, item in enumerate(episodes):
@@ -505,52 +572,14 @@ class DownloaderAnime():
             print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.get_anime_ep_index.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
      
 if __name__ == "__main__":
-    # possiveis sites para baixar animes pelo script
-    # https://animefire.to
-    # https://animefire.net
-    # https://www.hinatasoul.com
-    # https://animesaria.com
-    # https://animesorionvip.com
-    # https://animeq.blog
-    # https://www.anitube.vip
-    # https://goyabu.org/
-    # https://www.animesking.com
-    # https://animeszone.net 
-    # https://www.superanimes.biz
-    # https://animesdigital.org
-    # https://animesflix.net
     
-    
-    downloader = DownloaderAnime()
+    save_path = os.path.join(os.environ['USERPROFILE'], 'Videos')
+    downloader = DownloaderAnime(save_path)
+    downloader.get_anime_saiko('naruto')
     common = downloader.common
     
     url, name = downloader.get_anime_animefire_net("Naruto Shippuuden")
-    downloader.down_episodes_animefire_net(url, name, r'C:\Users\bros_\Videos')
+    downloader.down_episodes_animefire_net(url, name)
     
-    save_path = ""
-    
-    option = -1
-    list_episodes = []
-    
-    sleep(2)
-    regex = re.compile('((?:https\:\/\/)|(?:http\:\/\/)|(?:www\.))?([a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(?:\??)[a-zA-Z0-9\-\._\?\,\'\/\\\+&%\$#\=~]+)')
-    while option != '0':
-        
-        print("0 - SAIR\n1 - Baixar todos os episódios Saiko Animes")
-        option = input("Digite -> ")
-        if option == '1':
-            t_i = common.initCountTime(True)
-            login = input("Deseja realizar o login? (S)sim/(n)não\n-> ")
-            out_path = common.create_folder("- Downloaded -", save_path)
-            if 's' in login.lower() or 'sim' in login.lower() or 'si' in login.lower() or 'yes' in login.lower() or 'y' in login.lower():
-                driver = downloader.login_saiko(save_path)
-            else:
-                driver = None
-            search = input("Digite o nome do anime -> ")
-            driver, name = downloader.get_anime_saiko(search=search, web_driver=driver, save_path=out_path)
-            if driver and name:
-                downloader.down_episodes_saiko(web_driver=driver, save_path=out_path, name=name)
-            t_f = common.finishCountTime(t_i, True)
-            common.print_time(t_f)
             
                 

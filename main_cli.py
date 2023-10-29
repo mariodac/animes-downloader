@@ -9,10 +9,7 @@ from anilist_get_chaps_from_reader import AnilistGetChapsFromReader
 from modules.downloader import DownloaderAnime
 
 if __name__ == "__main__":
-    
-    downloader = DownloaderAnime()
     common = Common()
-    
     save_path = os.path.join(os.environ['USERPROFILE'], 'Videos')
     
     option = -1
@@ -24,23 +21,26 @@ if __name__ == "__main__":
         print("0 - SAIR\n1 - Baixar episódios Saiko Animes\n2 - Baixar episódios AnimeFire.net\n3 - Atualizar Anilist")
         option = common.only_read_int("Digite -> ")
         if option == 1:
+            out_path = common.create_folder("- Downloaded -", save_path)
+            downloader = DownloaderAnime(out_path)
             t_i = common.initCountTime(True)
             print('Iniciado opção Baixar episódios Saiko Animes em {}'.format(common.timestamp()))
             login = input("Deseja realizar o login? (S)sim/(n)não\n-> ")
-            out_path = common.create_folder("- Downloaded -", save_path)
             if 's' in login.lower() or 'sim' in login.lower() or 'si' in login.lower() or 'yes' in login.lower() or 'y' in login.lower():
-                driver = downloader.login_saiko(save_path)
+                downloader.login_saiko()
             else:
                 driver = None
             search = input("Digite o nome do anime -> ")
-            driver, name = downloader.get_anime_saiko(search=search, web_driver=driver, save_path=out_path)
-            if driver and name:
-                downloader.down_episodes_saiko(web_driver=driver, save_path=out_path, name=name)
-            shutil.rmtree(out_path)
+            name = downloader.get_anime_saiko(search=search)
+            if name:
+                downloader.down_episodes_saiko(save_path=out_path, name=name)
+                shutil.rmtree(out_path)
             print('Finalizado opção Baixar episódios Saiko Animes em {}'.format(common.timestamp()))
             t_f = common.finishCountTime(t_i, True)
             common.print_time(t_f)
+            del downloader
         elif option == 2:
+            downloader = DownloaderAnime(save_path)
             t_i = common.initCountTime(True)
             print('Iniciado opção Baixar episódios AnimeFire.net em {}'.format(common.timestamp()))
             search = input("Digite o nome do anime -> ")
@@ -50,7 +50,8 @@ if __name__ == "__main__":
             t_f = common.finishCountTime(t_i, True)
             common.print_time(t_f)
             print('Finalizado opção Baixar episódios AnimeFire.net em {}'.format(common.timestamp()))
-
+            del downloader
+            
         elif option == 3:
             anilist_get_chaps_from_reader = AnilistGetChapsFromReader()
             t_i = common.initCountTime(True)
@@ -80,8 +81,10 @@ if __name__ == "__main__":
                 mangas_list = anilist_get_chaps_from_reader.get_mangas_anilist(username)
             mangas_not_found = anilist_get_chaps_from_reader.set_list_anilist_mangaschan(mangas_list)
             t_f = common.finishCountTime(t_i, True)
+            common.normalize_name()
             common.print_time(t_f)
             print('Finalizado opção Baixar episódios AnimeFire.net em {}'.format(common.timestamp()))
+            del anilist_get_chaps_from_reader
         else:
             print("Opção inválida")
             continue

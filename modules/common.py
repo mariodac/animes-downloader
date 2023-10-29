@@ -13,29 +13,33 @@ import constants as cnst
 class Common():
         
     def normalize_name(self, name:str):
-        """
-         Normalizar o nome do arquivo
-         
-         @param name -Nome do arquivo
-         
-         @return -Nome normalizado
+        """Normalizar um string para padrão aceitável no windows
+
+        Args:
+            name (str): texto a ser normalizado
+
+        Returns:
+            str: texto normalizado
         """
         # Lista de caracteres proibidos no Windows
         caracteres_proibidos = r'[<>:"/\\|?*]'
+        # retira caracters acentuados
         name = unidecode(name)
+        # substitui caracteres proibidos do windows por vazio
         name = re.sub(caracteres_proibidos, '', name)
         return name
-    
-    def get_free_space_mb(self, dirname):
-        """
-         Obter espaço livre em MB para um diretório.
-         
-         @param dirname -Nome do diretório a verificar
-         
-         @return Espaço livre em MB ou 0 em erro (não encontrado ou grande demais para ser considerado um espaço livre
+
+    def get_free_space_mb(self, dirname:str):
+        """Obter espaço livre em MB para um diretório.
+
+        Args:
+            dirname (str): Nome do diretório a verificar
+
+        Returns:
+            float: Espaço livre em MB ou 0 em erro (não encontrado ou grande demais para ser considerado um espaço livre
         """
         try:
-            # Total free space in bytes of the file.
+            # Espaço total livre em bytes do arquivo.
             if platform.system() == 'Windows':
                 free_bytes = ctypes.c_ulonglong(0)
                 ctypes.windll.kernel32.GetDiskFreeSpaceExW(ctypes.c_wchar_p(dirname), None, None, ctypes.pointer(free_bytes))
@@ -47,16 +51,16 @@ class Common():
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('ERRO DURANTE EXECUÇÃO na FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.get_free_space_mb.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace("\n", " ")))
-            
-        
-    def create_folder(self, name, dirname):
-        """
-         Cria uma pasta se não existe. Verifica se a pasta existe e se não existe, cria-a
-         
-         @param name -Nome da pasta a criar
-         @param dirname -Directório onde a pasta será criada. É usado para criar a pasta
-         
-         @return O caminho total da pasta criada
+              
+    def create_folder(self, name:str, dirname:str):
+        """Verifica se a diretório existe e se não existe, realiza a criação da diretório
+
+        Args:
+            name (str): Nome da diretório a criar
+            dirname (str): Diretório onde a diretório será criada. É usado para criar a diretório
+
+        Returns:
+            str: O caminho da diretório
         """
         
         try:
@@ -64,9 +68,9 @@ class Common():
             directory = os.listdir(dirname)
             complete = os.path.join(dirname, name)
             # print(complete)
-            # Check if file exists in directory or not
+            # Verifique se o diretorio com este nome existe no diretório ou não
             if(name not in directory):
-                # Create a directory if it doesn t exist.
+                # Crie um diretório se não existir.
                 if not os.path.isdir(complete):
                     os.mkdir(complete)
                     return complete
@@ -78,11 +82,11 @@ class Common():
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('ERRO DURANTE EXECUÇÃO na FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.create_folder.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace("\n", " ")))
             
-    def print_time(self,t_f):    
-        """
-         Imprime a hora para o console. Este é um método a ser usado em conjunto com
-         
-         @param t_f - Tempo em segundos para
+    def print_time(self,t_f:float):    
+        """Imprime o tempo de execução para o terminal. Exibe dias, horas, minutos e segundos
+
+        Args:
+            t_f (float): Tempo em segundos
         """
         try:
             segundos = t_f % 60 
@@ -107,13 +111,14 @@ class Common():
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('ERRO DURANTE EXECUÇÃO {}: \nTIPO - {}\nARQUIVO - {}\nLINHA - {}\nMESSAGE:{}'.format(self.print_time.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__))
         
-    def only_read_int(self, string=None):
-        """
-         Leia apenas um número inteiro do usuário. Se o usuário não inserir nada, um prompt é impresso
-         
-         @param string - Mensagem a ser exibida no prompt
-         
-         @return Integra leitura do usuário ou None se nada foi informado
+    def only_read_int(self, string:str=None):
+        """Leia apenas um número inteiro do usuário. Se o usuário não inserir nada, uma mensagem será exibida
+
+        Args:
+            string (str, optional): Mensagem a ser exibida no terminal. Defaults to None.
+
+        Returns:
+            int or None: Numero informado pelo usuário. None se nada foi informado. 
         """
         entrada = None
         try:
@@ -129,21 +134,50 @@ class Common():
                     continue
         return entrada
             
-    def timestamp (self):    
-        """ Retorna tempo  atual em segundos"""       
+    def timestamp (self):
+        """Retorna o tempo atual no formato Sun Jun 20 23:21:05 1993
+
+        Returns:
+            str: Retorna o tempo atual em segundos
+        """
         t = time ()
         return ctime (t)
 
-    def initCountTime(self, print_time=False):
-        """ Inicia contagem de tempo """
+    def initCountTime(self, print_time:bool=False):
+        """Inicializa o contador de tempo a partir deste método
+
+        Args:
+            print_time (bool, optional): Indica se pode imprimir o tempo. Defaults to False.
+
+        Returns:
+            float: Retorna a quantidade de tempo em segundos
+        """
+        # Imprime o tempo atual
         if print_time:
             print(self.timestamp())
         t_o = time() 
         return t_o
 
-    def finishCountTime(self, t_o, print_time=False):
-        """ Encerra a contagem """
+    def finishCountTime(self, t_i:float, print_time=False):
+        """Finaliza o contador de tempo a partir deste método
+
+        Args:
+            t_i (float): É o tempo inicial
+            print_time (bool, optional): Indica se pode imprimir o tempo. Defaults to False.
+
+        Returns:
+            float: Quantidade de tempo em segundos
+        """        
+        """
+         
+         
+         @param t_i - É o tempo inicial
+         @param print_time - Indica se pode imprimir o tempo
+         
+         @return Retorna a quantidade de tempo em segundos
+        """
+        # Imprima o tempo atual.
         if print_time:
             print(self.timestamp())
-        t_f = int(time () - t_o)
+        t_f = int(time () - t_i)
         return t_f

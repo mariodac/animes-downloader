@@ -1,8 +1,6 @@
 NAME_LOG = "animes_download"
 
-SAIKO_URL = "https://saikoanimes.net/"
+AGREGADOR_ANIME = {"saiko" : "https://saikoanimes.net/", "animefire.net" : "https://animefire.net/"}
 
-ANIMEFIRENET_URL = "https://animefire.net/"
-
-AGREGADOR_MANGA = {'MANGALIVRE': ['https://mangalivre.net'], 'MANGADEX': ['https://mangadex.org', '/search?q='], 'MANGAFIRE': ['https://mangafire.to', '/filter?keyword='], 'LERMANGA': ['https://lermanga.org', '/?s='], 'MANGASCHAN': ['https://mangaschan.net', '/?s=']}
+AGREGADOR_MANGA = {'MANGALIVRE': 'https://mangalivre.net', 'MANGADEX': 'https://mangadex.org', 'MANGAFIRE': 'https://mangafire.to', 'LERMANGA': 'https://lermanga.org', 'MANGASCHAN': 'https://mangaschan.net'}
 

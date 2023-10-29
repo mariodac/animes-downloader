@@ -18,22 +18,29 @@ import requests
 import re
 
 class Web():
-    def __init__(self, binary_location=None):
+    def __init__(self, binary_location:str=None):
+        """Inicia classe Web
+
+        Configura localização do binário do chrome
+
+        Args:
+            binary_location (str, optional): Localização do binário do chrome. Defaults to None.
+        """
         self.common = common.Common()
         if binary_location:
             self.binary_location = binary_location
         else:
-            self.binary_location =self.verify_chrome()
-        
+            self.binary_location =self.verify_chrome()  
       
-    def download_archive(self, url, path_archive):  
-        """
-         Baixe o arquivo e retorne caminho para ele. Se o path_archive é None defina automático nome para baixar arquivo 
-         
-         @param url - URL do arquivo para download
-         @param path_archive - Caminho para arquivo para download (default None)
-         
-         @return status
+    def download_archive(self, url:str, path_archive:str):  
+        """Baixe o arquivo e retorne caminho para ele. Se o path_archive é None defina automático nome para baixar arquivo 
+
+        Args:
+            url (str): URL do arquivo para download
+            path_archive (str): Caminho para arquivo para download
+
+        Returns:
+            boolean: status de download
         """
         try:
             freespace = self.common.get_free_space_mb(path_archive)
@@ -76,7 +83,7 @@ class Web():
                 return path_archiveName
             else:
                 print("Sem espaço na memória")
-                return None
+                return False
         except Exception as err:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
@@ -89,6 +96,15 @@ class Web():
             return False
     
     def wait_download_file(self, path_download):
+        """Aguarde o termino do download
+
+        Args:
+            path_download (str): caminho do download
+
+        Returns:
+            boolean: status de download
+        """        
+
         """
          Espera para o arquivo de download terminar. Esta é uma função de bloqueio para voltar após 30 minutos
          
@@ -130,7 +146,17 @@ class Web():
             print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.wait_download_file.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
             sys.exit()
 
-    def init_webdriver(self,default=True, headless=False, saida:os.PathLike=None):
+    def init_webdriver(self,default=True, headless=False, saida:str=None):
+        """Inicia navegador automatizado google chrome
+
+        Args:
+            default (bool, optional): Define se navegador será aberto com opções padrão. Defaults to True.
+            headless (bool, optional): Define se navegador abrirá com interface. Defaults to False.
+            saida (str, optional): Diretório para downloads. Defaults to None.
+
+        Returns:
+            webdriver: navegador automatizado google chrome configurado
+        """
         try:
             s=Service(ChromeDriverManager().install())
             if default:
@@ -141,14 +167,14 @@ class Web():
             else:
                 # caminho das extensões
                 extension_path = os.path.join(os.path.split(os.path.dirname(os.path.realpath(__file__)))[0], 'extensions')
-                extension = [os.path.join(os.path.dirname(__file__), 'extensions', 'popup_blocker.crx')]
+                extensions = [os.path.join(extension_path, 'popup_blocker.crx'), os.path.join(extension_path, 'enable_right_click.crx')]
                 # extension = [os.path.join(extension_path, 'adblock.crx'), os.path.join(extension_path, 'enable_right_click.crx')]
                 # extension = [os.path.join(extension_path, 'enable_right_click.crx')]
                 try:
                     if headless:
-                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=True, download_output=saida, crx_extension=extension))
+                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=True, download_output=saida, crx_extension=extensions))
                     else:
-                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=False, download_output=saida, crx_extension=extension))
+                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=False, download_output=saida, crx_extension=extensions))
                 except:
                     if headless:
                         driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=True, download_output=saida))
@@ -162,6 +188,16 @@ class Web():
             sys.exit()
 
     def optionsChrome(self, headless=False, download_output=None, crx_extension:list=None):
+        """Configura opções do navegador chrome
+
+        Args:
+            headless (bool, optional): Define se navegador irá iniciar sem interface. Defaults to False.
+            download_output (str, optional): Define diretorio para downloads. Defaults to None.
+            crx_extension (list, optional): Listas de extensões para instalar no navegador. Defaults to None.
+
+        Returns:
+            Options: objeto contendo todas as opções configuradas do navegador
+        """
         # Criar uma instância dr opções Chrome e devolvê-lo. Esta é a primeira chamada que você quer executar
         try:
             chrome_options = Options()
@@ -191,11 +227,10 @@ class Web():
             print('ERRO DURANTE EXECUÇÃO {}: \nTIPO - {}\nARQUIVO - {}\nLINHA - {}\nMESSAGE:{}'.format(self.optionsChrome.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__))
         
     def verify_chrome(self):
-        """
-         Verifica se existe um navegador chrome instalado e retorna o caminho do navegador.
-         
-         
-         @return Retorna o caminho do executado
+        """Verifica se existe navegador chrome instalado e retorna o binario do navegador
+
+        Returns:
+            str: caminho do binário do navegador chrome
         """
         # Retorna o caminho para o executável mais recente do Chrome x32 ou X86. Isso é baseado na presença de um arquivo
         results_32 = [x for x in os.listdir(os.environ['PROGRAMFILES']) if re.search(r'(google)', x, re.IGNORECASE)]
@@ -226,14 +261,15 @@ class Web():
             print("Navegador não instalado")
             return None
         
-    def web_scrap(self, url=None, markup=None):
-        """
-         Este é um envolvente em torno de BeautifulSoup para nos permitir fazer coisas como strip tags e outros recursos que não funcionam em Python
-         
-         @param url - O url para realizar requisição
-         @param markup - O HTML para gerar objeto de BeautifulSoup
-         
-         @return Um objeto de BeautifulSoup
+    def web_scrap(self, url:str=None, markup:str=None):
+        """Realiza requisição em site e/ou obtem o conteudo do HTML
+
+        Args:
+            url (str, optional): URL a ser requisitada. Defaults to None.
+            markup (str, optional): conteudo HTML. Defaults to None.
+
+        Returns:
+            bs4.BeautifulSoup: objeto BeautifulSoup
         """
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
@@ -249,12 +285,22 @@ class Web():
             soup = BeautifulSoup(request.content, feature)
         return soup
     
-    
+    def try_quit_webdriver(self, driver:webdriver):
+        """Fecha navegador se tiver aberto
+
+        Args:
+            driver (webdriver): instancia do navegador automatizado
+        """        
+        try:
+            driver.quit()
+        except:
+            print("Navegador fechado")
+
     def check_driver(self, driver:webdriver):
-        """
-         Verifique se há mais de uma janela para mudar.
-         
-         @param driver - Motor de selênio a verificar
+        """Verifique se há mais de uma janela para mudar.
+
+        Args:
+            driver (webdriver): navegador a verificar
         """
         # Passe para a ultima janela.
         while len(driver.window_handles)>1:
@@ -264,7 +310,7 @@ class Web():
             # Passe para a primeira janela.
             driver.switch_to.window(driver.window_handles[0])
 
-    def check_crdownload(self, save_path:os.PathLike):
+    def check_crdownload(self, save_path:str):
         """
             Verifique se o crdownload está presente em save_path. Este é um hack para evitar o download que não termina ou ocorra um erro
             
@@ -277,5 +323,6 @@ class Web():
             # Se não houver arquivos na lista, encerre o loop.
             if len(files) == 0:
                 break
+
 if __name__ == '__main__':
     Web('animes_downloads')

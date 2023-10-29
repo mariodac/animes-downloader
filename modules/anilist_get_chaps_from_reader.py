@@ -27,11 +27,6 @@ if os.name == 'nt':
     log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
     # aplica formato 
     formatter = logging.Formatter(log_format)
-else:
-    path_log = os.environ['HOME']
-    # formato do log
-    log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-    formatter = logging.Formatter(log_format)
 path_log = os.path.join(path_log, '.{}'.format(name_log))
 # especificando nome do arquivo de log 
 file_handler = logging.FileHandler("{}.log".format(path_log))
@@ -41,12 +36,19 @@ logger.addHandler(file_handler)
 # FIM configura nivel de log
 class AnilistGetChapsFromReader():
     def __init__(self):
+        """Inicia classe e os objetos necessários para classe e inicia navegador
+        """
         self.common = Common()
         self.web = Web()
         self.driver = self.web.init_webdriver()
 
+    def __del__(self):
+        """Função destrutora, fecha o navegador
+        """
+        self.web.try_quit_webdriver(self.driver)
+
     def scroll_to_bottom_page(self):
-        """Rola até o final da lista de chat
+        """Rola até o final da página de mangás em leitura
         """
         try:
             SCROLL_PAUSE_TIME = 2
@@ -82,6 +84,11 @@ class AnilistGetChapsFromReader():
                 print('log_exception() called without an active exception.')
 
     def login_anilist(self):
+        """Realiza login no anilist
+
+        Returns:
+            str: nome do usuario
+        """
         self.driver.get('https://anilist.co/login')
         inputs = self.driver.find_elements(By.CLASS_NAME, 'al-input')
         # insere informações de login
@@ -94,25 +101,25 @@ class AnilistGetChapsFromReader():
             time.sleep(1)
             print('\a')
             os.system('pause')
-        else:
-            time.sleep(1)
-            print('\a')
-            input('Press enter to continue')
         profile = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, '//a[@class="link"]')))
         profile_name = profile.get_attribute('href').split('/')[-2]
         return profile_name
 
     def create_custom_list(self):
+        """Cria as listas personalizadas no anilist
+        """
         try:
             custom_lists = ['Waiting new chaps releases', 'New chaps releases', 'Finished releases', 'Adult Label']
             for custom in custom_lists:
                 self.driver.get('https://anilist.co/settings/lists')
+                # verifica se listas já existem
                 custom_list = self.driver.find_elements(By.CLASS_NAME, 'el-input__inner')
                 custom_list_text = [x.get_attribute('value') for x in custom_list]
                 if custom in custom_list_text:
                     print(f'Lista {custom} já existe')
                     continue
                 else:
+                    # Obtem o botão de Add+ e realiza o clique
                     custom_list[-1].send_keys(custom)
                     add = self.driver.find_elements(By.CLASS_NAME, 'cancel')
                     add[-1].click()
@@ -122,12 +129,21 @@ class AnilistGetChapsFromReader():
                     time.sleep(5)
 
         except Exception as err:
-            self.driver.quit()
+            self.web.try_quit_webdriver(self.driver)
             nline = sys.exc_info()[2]
             if nline:
                 print('Na linha {} -{}'.format(nline.tb_lineno,err))
 
-    def search_golden(self, anime_name, url_search_golden):
+    def search_golden(self, anime_name:str, url_search_golden:str):
+        """Busca manga no golden mangas
+
+        Args:
+            anime_name (str): Nome do anime
+            url_search_golden (str): URL de busca da goldenz
+
+        Returns:
+            _type_: _description_
+        """
         self.driver.get(url_search_golden+anime_name)
         site = self.web.web_scrap(markup=self.driver.page_source)
         mangas = site.find_all('div', class_='mangas')
@@ -150,94 +166,130 @@ class AnilistGetChapsFromReader():
             site = None
             return mangas[0]
 
-    def search_mangaschan(self, manga_name, url_search):
-        site = self.web.web_scrap(url=url_search+manga_name)
-        mangas = site.find_all('div', class_='bsx')
-        mangas 
-        if len(mangas) > 1:
-            print(f'Foram encontrados mais de 1 resultado correspondente ao "{manga_name}"')
-            choice = 1
-            for manga in mangas:
-                name_manga = manga.find('div',  class_='tt')
-                if name_manga:
-                    name_manga = name_manga.text
-                manga_search = re.search(f'{manga_name}', name_manga,re.IGNORECASE)
-                if manga_search:
-                    mangas = [manga]
-                # if name_manga:
-                #     name_manga = name_manga.text.replace('\n', '').replace('\t', '')
-                # else:
-                #     name_manga = 'undefined'
-            site = None
-            return mangas
-        elif len(mangas) == 0:
-            site = None
-            return None
-        else:
-            site = None
-            return mangas[0]
+    def search_mangaschan(self, manga_name:str):
+        """Busca mangas no site mangaschan
+
+        Args:
+            manga_name (str): Nome do manga
+
+        Returns:
+            BeautifulSoup: elemento que contem o mangá
+        """
+        try:
+            site = self.web.web_scrap(url=f'{cnst.AGREGADOR_MANGA.get("MANGASCHAN")}/?s='+manga_name)
+            mangas = site.find_all('div', class_='bsx')
+            mangas 
+            if len(mangas) > 1:
+                print(f'Foram encontrados mais de 1 resultado correspondente ao "{manga_name}"')
+                choice = 1
+                for manga in mangas:
+                    name_manga = manga.find('div',  class_='tt')
+                    if name_manga:
+                        name_manga = name_manga.text
+                    manga_search = re.search(f'{manga_name}', name_manga,re.IGNORECASE)
+                    if manga_search:
+                        mangas = [manga]
+                    # if name_manga:
+                    #     name_manga = name_manga.text.replace('\n', '').replace('\t', '')
+                    # else:
+                    #     name_manga = 'undefined'
+                site = None
+                return mangas
+            elif len(mangas) == 0:
+                site = None
+                return None
+            else:
+                site = None
+                return mangas[0]
+        except Exception as err:
+            self.web.try_quit_webdriver(self.driver)
+            nline = sys.exc_info()[2]
+            if nline:
+                print('Na linha {} -{}'.format(nline.tb_lineno,err))
 
     def get_mangas_anilist(self, username:str):
-        # INICIA buscar lista de mangas em leitura no anilist
-        self.driver.get('https://anilist.co/user/{}/mangalist/Reading'.format(username))
-        time.sleep(2)
-        self.scroll_to_bottom_page()
-        site = self.web.web_scrap(markup=self.driver.page_source)
-        # titles = site.find_all('div', class_='title')
-        # titles_links = [x.a.get('href') for x in titles if x.a]
-        entrys = site.find_all('div', class_='entry-card')
-        titles_links = {}
-        # monta dicionario no seguinte esquema {nome_anime:[link, progresso]}
-        print("Obtendo lista de animes")
-        for entry in entrys:
-            title = entry.find('div', class_='title')
-            if title:
-                anime_name = title.text
-                anime_name = anime_name.strip()
-                titles_links.update({anime_name:[]})
-                if title.a:
-                    titles_links[anime_name].append(title.a.get('href'))
-                progress = entry.find('div', class_='progress')
-                if progress:
-                    progress_text = progress.text
-                    progress_text = progress_text.strip()
-                    progress_text = progress_text.replace('+', '')
-                    titles_links[anime_name].append(progress_text)
-        # INICIO busca nomes alternativos de cada anime
-        print("Buscando nomes alternativos")
-        t_0 = self.common.initCountTime(True)
-        for anime_name in titles_links:
-            item = titles_links.get(anime_name)
-            alt_names = []
-            if item:
-                self.driver.get('https://anilist.co'+item[0])
-                time.sleep(2)
-                data_set = [x for x in self.driver.find_elements(By.CLASS_NAME, 'data-set') if 'Romaji' in x.text or 'Synonyms' in x.text or 'English' in x.text]
-                if data_set:
-                    for data in data_set:
-                        value = data.find_elements(By.CLASS_NAME, 'value')
-                        if value:
-                            if '\n' in value[0].text:
-                                alt_names.extend(value[0].text.split('\n'))
-                                # item.extend(value[0].text.split('\n'))
-                            else:
-                                alt_names.append(value[0].text)
-                                # item.append(value[0].text)
-                item.append(alt_names)
-        # FIM busca nomes alternativos de cada anime
-        t_f = self.common.finishCountTime(t_0,True)
-        self.common.print_time(t_f)
-        # Salvar o arquivo 
-        out_file = os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt')
-        with open(out_file, 'w', encoding='utf-8') as file_txt:
-            for item in titles_links:
-                file_txt.write(f"{item} -- {' || '.join(titles_links[item][:-1])} || {' || '.join(titles_links[item][-1])}\n")
-        print(f"Arquivo salvo em {out_file}")
-        # print(titles_links)
-        # FIM obter animes do anilist
-        return titles_links
+        """Obter mangas do anilist
+
+        Args:
+            username (str): nome do usuário do anilist
+
+        Returns:
+            str: dicionario com valores dos mangás
+        """
+        try:
+            # INICIA buscar lista de mangas em leitura no anilist
+            self.driver.get('https://anilist.co/user/{}/mangalist/Reading'.format(username))
+            time.sleep(2)
+            self.scroll_to_bottom_page()
+            site = self.web.web_scrap(markup=self.driver.page_source)
+            # titles = site.find_all('div', class_='title')
+            # titles_links = [x.a.get('href') for x in titles if x.a]
+            entrys = site.find_all('div', class_='entry-card')
+            titles_links = {}
+            # monta dicionario no seguinte esquema {nome_anime:[link, progresso]}
+            print("Obtendo lista de animes")
+            for entry in entrys:
+                title = entry.find('div', class_='title')
+                if title:
+                    anime_name = title.text
+                    anime_name = anime_name.strip()
+                    titles_links.update({anime_name:[]})
+                    if title.a:
+                        titles_links[anime_name].append(title.a.get('href'))
+                    progress = entry.find('div', class_='progress')
+                    if progress:
+                        progress_text = progress.text
+                        progress_text = progress_text.strip()
+                        progress_text = progress_text.replace('+', '')
+                        titles_links[anime_name].append(progress_text)
+            # INICIO busca nomes alternativos de cada anime
+            print("Buscando nomes alternativos")
+            t_0 = self.common.initCountTime(True)
+            for anime_name in titles_links:
+                item = titles_links.get(anime_name)
+                alt_names = []
+                if item:
+                    self.driver.get('https://anilist.co'+item[0])
+                    time.sleep(2)
+                    data_set = [x for x in self.driver.find_elements(By.CLASS_NAME, 'data-set') if 'Romaji' in x.text or 'Synonyms' in x.text or 'English' in x.text]
+                    if data_set:
+                        for data in data_set:
+                            value = data.find_elements(By.CLASS_NAME, 'value')
+                            if value:
+                                if '\n' in value[0].text:
+                                    alt_names.extend(value[0].text.split('\n'))
+                                    # item.extend(value[0].text.split('\n'))
+                                else:
+                                    alt_names.append(value[0].text)
+                                    # item.append(value[0].text)
+                    item.append(alt_names)
+            # FIM busca nomes alternativos de cada anime
+            t_f = self.common.finishCountTime(t_0,True)
+            self.common.print_time(t_f)
+            # Salvar o arquivo 
+            out_file = os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt')
+            with open(out_file, 'w', encoding='utf-8') as file_txt:
+                for item in titles_links:
+                    file_txt.write(f"{item} -- {' || '.join(titles_links[item][:-1])} || {' || '.join(titles_links[item][-1])}\n")
+            print(f"Arquivo salvo em {out_file}")
+            # print(titles_links)
+            # FIM obter animes do anilist
+            return titles_links
+        except Exception as err:
+            nline = sys.exc_info()[2]
+            if nline:
+                print('Na linha {} -{}'.format(nline.tb_lineno,err))
 
     def set_list_anilist(self, manga_name:str, manga_url:str, no_releases:bool, new_release:bool, finish:bool):
+        """Adiciona manga a lista personalizada do anilist
+
+        Args:
+            manga_name (str): Nome do manga que será configurar
+            manga_url (str): URL do mangá que será configurado
+            no_releases (bool): Define se mangá está sem lançamentos
+            new_release (bool): Define se mangá está como novos lançamentos
+            finish (bool): Define se mangás já está finalizado
+        """        
         """
          Adiciona manga a lista personalizada do anilist
          
@@ -254,7 +306,7 @@ class AnilistGetChapsFromReader():
             time.sleep(2)
             site = self.web.web_scrap(markup=self.driver.page_source)
             adult = site.find('div', class_='adult-label')
-            # If adult is true then adult is true.
+            # Se o adulto é verdadeiro, então adicionado a lista adulto
             if adult:
                 adult = True
             else:
@@ -374,6 +426,11 @@ class AnilistGetChapsFromReader():
                 print('Na linha {} -{}'.format(nline.tb_lineno,err))
 
     def set_list_anilist_mangaschan(self, mangas_list:dict):
+        """Configura lista do anilist com base nos resultados do mangalivre
+
+        Args:
+            mangas_list (dict): Dicionario com informações do mangá
+        """
         try:
             mangas_not_found = {}
             needs_check = False
@@ -391,17 +448,15 @@ class AnilistGetChapsFromReader():
                     finish_chap_anilist = None
 
                 checked = False
-                url_agregador = cnst.AGREGADOR_MANGA.get('MANGASCHAN')
-                url_search_agregador = f'{url_agregador[0]}{url_agregador[1]}'
                 # pesquisa anime atual no mangas chan
                 while True:
-                    manga = self.search_mangaschan(manga_name, url_search_agregador)
+                    manga = self.search_mangaschan(manga_name)
                     if manga:
                         checked = True
                         break
                     else:
                         for value in values[-1]:
-                            manga = self.search_mangaschan(value, url_search_agregador)
+                            manga = self.search_mangaschan(value)
                             if manga:
                                 checked = True
                                 break
@@ -471,6 +526,14 @@ class AnilistGetChapsFromReader():
                 print('Na linha {} -{}'.format(nline.tb_lineno,err))
 
     def search_mangalivre(self, manga_name):
+        """Pesquisa mangás no mangalivre
+
+        Args:
+            manga_name (str): Nome do mangá
+
+        Returns:
+            BeautifulSoup: elemento contendo informação do mangá
+        """
         try:
             self.driver.get('https://mangalivre.net')
             busca_botao = self.driver.find_elements(By.XPATH, "//button[@class='btn-search']")
@@ -508,6 +571,11 @@ class AnilistGetChapsFromReader():
                 print('Na linha {} -{}'.format(nline.tb_lineno,err))
 
     def set_list_anilist_mangalivre(self, mangas_list:dict):
+        """Configura lista do anilist com base nos resultados do mangalivre
+
+        Args:
+            mangas_list (dict): Dicionario com informações do mangá
+        """
         mangas_not_found = {}
         needs_check = False
         no_releases = None
