@@ -733,7 +733,7 @@ class AnilistRobot():
                                     # verifica se elemento dropdown foi encontrado
                                     if dropdown:
                                         dropdown[0].click()
-                                        time.sleep(5)
+                                        time.sleep(3)
                                         # busca o as opções do dropdown
                                         elements_dropdown = self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]')
                                         if elements_dropdown:
@@ -743,7 +743,7 @@ class AnilistRobot():
                                                 # inicia a busca até que encontre as opções do dropdown
                                                 while True:
                                                     elements_dropdown = self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]')
-                                                    time.sleep(5)
+                                                    time.sleep(3)
                                                     # filtra apena elemento que estão visiveis
                                                     elements_dropdown = [x for x in self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]') if x.is_displayed()]
                                                     # verificar se encontrou as opções do dropdown
@@ -769,7 +769,7 @@ class AnilistRobot():
                                                             status[0].click()
                                                             op_status = self.driver.find_elements(By.XPATH, '//ul[@class="el-scrollbar__view el-select-dropdown__list"]//li')
                                                             if op_status:
-                                                                if op_status == '0':
+                                                                if list_names.get(item) == '0':
                                                                     op_status[1].click()
                                                                 else:
                                                                     op_status[0].click()
