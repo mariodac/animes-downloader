@@ -19,7 +19,6 @@ from selenium.webdriver.common.action_chains import ActionChains
 import getpass
 
 class DownloaderAnime():
-    "teste de classe"
     def __init__(self, save_path:str):
         """
         Classe para funções de baixar animes
