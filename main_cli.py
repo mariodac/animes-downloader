@@ -5,7 +5,7 @@ from common import Common
 import re
 import shutil
 from time import sleep
-from anilist_get_chaps_from_reader import AnilistGetChapsFromReader
+from anilist_robot import AnilistRobot
 from modules.downloader import DownloaderAnime
 
 if __name__ == "__main__":
@@ -18,7 +18,7 @@ if __name__ == "__main__":
     regex = re.compile('((?:https\:\/\/)|(?:http\:\/\/)|(?:www\.))?([a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(?:\??)[a-zA-Z0-9\-\._\?\,\'\/\\\+&%\$#\=~]+)')
     while option != 0:
         
-        print("0 - SAIR\n1 - Baixar episódios Saiko Animes\n2 - Baixar episódios AnimeFire.net\n3 - Atualizar Anilist")
+        print("0 - SAIR\n1 - Baixar episódios Saiko Animes\n2 - Baixar episódios AnimeFire.net\n3 - Atualizar Anilist\n4 - Adicionar ao Anilist")
         option = common.only_read_int("Digite -> ")
         if option == 1:
             out_path = common.create_folder("- Downloaded -", save_path)
@@ -53,12 +53,12 @@ if __name__ == "__main__":
             del downloader
             
         elif option == 3:
-            anilist_get_chaps_from_reader = AnilistGetChapsFromReader()
+            anilist_robot = AnilistRobot()
             t_i = common.initCountTime(True)
             print('Iniciado opção Atualizar Anilist em {}'.format(common.timestamp()))
-            username = anilist_get_chaps_from_reader.login_anilist()
+            username = anilist_robot.login_anilist()
             # anilist_get_chaps_from_reader.set_list_anilist(driver, 'Megami no Sprinter ', '/manga/101617/Megami-no-Sprinter/', True, True, True)
-            anilist_get_chaps_from_reader.create_custom_list()
+            anilist_robot.create_custom_list()
             mangas_list = {}
             file_anime_names = os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt')
             if os.path.isfile(file_anime_names):
@@ -78,13 +78,36 @@ if __name__ == "__main__":
 
                 mangas_list = dict(sorted(mangas_list.items()))
             else:
-                mangas_list = anilist_get_chaps_from_reader.get_mangas_anilist(username)
-            mangas_not_found = anilist_get_chaps_from_reader.set_list_anilist_mangaschan(mangas_list)
+                mangas_list = anilist_robot.get_mangas_anilist(username)
+            mangas_not_found = anilist_robot.set_list_anilist_mangaschan(mangas_list)
             t_f = common.finishCountTime(t_i, True)
-            common.normalize_name()
             common.print_time(t_f)
-            print('Finalizado opção Baixar episódios AnimeFire.net em {}'.format(common.timestamp()))
-            del anilist_get_chaps_from_reader
+            print('Finalizado opção Atualizar Anilist em {}'.format(common.timestamp()))
+            del anilist_robot
+        elif option == 4:
+            t_i = common.initCountTime(True)
+            print('Iniciado opção adicionar ao Anilist em {}'.format(common.timestamp()))
+            anilist_robot = AnilistRobot()
+            items = {}
+            type_material = common.only_read_int("1 - para mangas\n2 - para animes\n-> ")
+            print('Todos os nomes deve ter o sinal \"=\" seguido da quantidades de episódios/capitulos')
+            print('Siga o exemplo a seguir')
+            print('#'*50)
+            print('Miageru to Kimi wa=1\nYamada-kun to Lv999 no Koi wo Suru=2')
+            print('#'*50)
+            print('Para iniciar não digite nada e apenas pressione o ENTER 2 vezes')
+            while True:
+                item = input()
+                if item:
+                    name, chap = item.split('=')
+                    items.update({name : chap})
+                else:
+                    break
+            anilist_robot.add_on_anilist(items, type_material)
+            t_f = common.finishCountTime(t_i, True)
+            common.print_time(t_f)
+            print('Finalizado opção adicionar ao Anilist em {}'.format(common.timestamp()))
+            del anilist_robot
         else:
             print("Opção inválida")
             continue
