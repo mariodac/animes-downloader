@@ -3,9 +3,10 @@ import sys
 import time
 import re
 import logging
-import utils.constants as cnst
 sys.path.append(os.path.join(os.path.dirname(__file__), "utils"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "modules"))
+sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "utils"))
+import constants as cnst
 from web import Web
 from common import Common
 from selenium.webdriver.common.action_chains import ActionChains
@@ -34,7 +35,7 @@ file_handler.setFormatter(formatter)
 # adiciona arquivo ao manipulador de arquivo de log
 logger.addHandler(file_handler)
 # FIM configura nivel de log
-class AnilistGetChapsFromReader():
+class AnilistRobot():
     def __init__(self):
         """Inicia classe e os objetos necessários para classe e inicia navegador
         """
@@ -89,7 +90,7 @@ class AnilistGetChapsFromReader():
         Returns:
             str: nome do usuario
         """
-        self.driver.get('https://anilist.co/login')
+        self.driver.get(f'{cnst.ANILIST}/login')
         inputs = self.driver.find_elements(By.CLASS_NAME, 'al-input')
         # insere informações de login
         # if inputs:
@@ -111,7 +112,7 @@ class AnilistGetChapsFromReader():
         try:
             custom_lists = ['Waiting new chaps releases', 'New chaps releases', 'Finished releases', 'Adult Label']
             for custom in custom_lists:
-                self.driver.get('https://anilist.co/settings/lists')
+                self.driver.get(f'{cnst.ANILIST}/settings/lists')
                 # verifica se listas já existem
                 custom_list = self.driver.find_elements(By.CLASS_NAME, 'el-input__inner')
                 custom_list_text = [x.get_attribute('value') for x in custom_list]
@@ -166,7 +167,7 @@ class AnilistGetChapsFromReader():
             site = None
             return mangas[0]
 
-    def search_mangaschan(self, manga_name:str):
+    def search_mangaschan(self, manga_name:str, alt_names):
         """Busca mangas no site mangaschan
 
         Args:
@@ -178,7 +179,6 @@ class AnilistGetChapsFromReader():
         try:
             site = self.web.web_scrap(url=f'{cnst.AGREGADOR_MANGA.get("MANGASCHAN")}/?s='+manga_name)
             mangas = site.find_all('div', class_='bsx')
-            mangas 
             if len(mangas) > 1:
                 print(f'Foram encontrados mais de 1 resultado correspondente ao "{manga_name}"')
                 choice = 1
@@ -186,9 +186,11 @@ class AnilistGetChapsFromReader():
                     name_manga = manga.find('div',  class_='tt')
                     if name_manga:
                         name_manga = name_manga.text
+                        name_manga = self.common.normalize_name(name_manga)
                     manga_search = re.search(f'{manga_name}', name_manga,re.IGNORECASE)
-                    if manga_search:
+                    if name_manga in alt_names:
                         mangas = [manga]
+                        break
                     # if name_manga:
                     #     name_manga = name_manga.text.replace('\n', '').replace('\t', '')
                     # else:
@@ -218,7 +220,7 @@ class AnilistGetChapsFromReader():
         """
         try:
             # INICIA buscar lista de mangas em leitura no anilist
-            self.driver.get('https://anilist.co/user/{}/mangalist/Reading'.format(username))
+            self.driver.get(f'{cnst.ANILIST}/user/{username}/mangalist/Reading')
             time.sleep(2)
             self.scroll_to_bottom_page()
             site = self.web.web_scrap(markup=self.driver.page_source)
@@ -249,9 +251,9 @@ class AnilistGetChapsFromReader():
                 item = titles_links.get(anime_name)
                 alt_names = []
                 if item:
-                    self.driver.get('https://anilist.co'+item[0])
+                    self.driver.get(f'{cnst.ANILIST}{item[0]}')
                     time.sleep(2)
-                    data_set = [x for x in self.driver.find_elements(By.CLASS_NAME, 'data-set') if 'Romaji' in x.text or 'Synonyms' in x.text or 'English' in x.text]
+                    data_set = [x for x in self.driver.find_elements(By.CLASS_NAME, 'data-set') if 'Romaji' in x.text or 'Synonyms' in x.text or 'English' in x.text or 'Native' in x.text]
                     if data_set:
                         for data in data_set:
                             value = data.find_elements(By.CLASS_NAME, 'value')
@@ -302,7 +304,7 @@ class AnilistGetChapsFromReader():
         """
         try:
             # abre página do anime no anilist para realizar edições
-            self.driver.get('https://anilist.co'+manga_url)
+            self.driver.get(f'{cnst.ANILIST}{manga_url}')
             time.sleep(2)
             site = self.web.web_scrap(markup=self.driver.page_source)
             adult = site.find('div', class_='adult-label')
@@ -450,13 +452,13 @@ class AnilistGetChapsFromReader():
                 checked = False
                 # pesquisa anime atual no mangas chan
                 while True:
-                    manga = self.search_mangaschan(manga_name)
+                    manga = self.search_mangaschan(manga_name, mangas_list.get(manga_name)[-1])
                     if manga:
                         checked = True
                         break
                     else:
                         for value in values[-1]:
-                            manga = self.search_mangaschan(value)
+                            manga = self.search_mangaschan(value, mangas_list.get(manga_name)[-1])
                             if manga:
                                 checked = True
                                 break
@@ -669,16 +671,145 @@ class AnilistGetChapsFromReader():
                 print('Manga com erro {}'.format(manga_name))
                 print('Na linha {} -{}'.format(nline.tb_lineno,err))
 
+    def add_on_anilist(self, list_names:list, type_material:int):
+        """Adicionar mangá ou anime no anilist
+
+        Args:
+            list_names (list): lista de nome das obras
+            type (int): tipo de obra. 1 para manga 2 para anime
+        """
+        for item in list_names:
+            # pesquisa com e sem tag adult
+            params = ['', '&adult=true']
+            for p in params:
+                if type_material == 1:
+                    self.driver.get(f'{cnst.ANILIST}/search/manga?search={item}{p}')
+                elif type_material == 2:
+                    self.driver.get(f'{cnst.ANILIST}/search/anime?search={item}{p}')
+                time.sleep(2)
+                # busca elemento indicando que não houve resultados
+                no_results = self.driver.find_elements(By.CLASS_NAME, 'no-results')
+                results = self.driver.find_elements(By.XPATH, '//div[@class="results cover"]')
+                if no_results:
+                    print(f"{item} não foi encotrado no anilist")
+                if results:
+                    site = self.web.web_scrap(markup=self.driver.page_source)
+                    results_cover = site.find('div', class_='results cover')
+                    if results_cover:
+                        # vai rolando até ter todos os resultados
+                        links_results = results_cover.find_all('a', class_='title')
+                        scroll_height = self.driver.execute_script("return document.getElementsByClassName('results cover')[0].scrollHeight")
+                        while True:
+                            SCROLL_PAUSE_TIME = 2
+                            ActionChains(self.driver).send_keys(Keys.END).perform()
+                            time.sleep(SCROLL_PAUSE_TIME)
+                            scroll_old = scroll_height
+                            scroll_height = self.driver.execute_script("return document.getElementsByClassName('results cover')[0].scrollHeight")
+                            links_results = results_cover.find_all('a', class_='title')
+                            if scroll_old >= scroll_height:
+                                break
+                        anilist_results = [f'{cnst.ANILIST}{x.get("href")}' for x in links_results if not x.div]
+                        if len(anilist_results) == 0:
+                            print(f'{item} já adicionado no anilist')
+                        # percorre url de cada resultado verificando qual se encaixa na pesquisa        
+                        for url in anilist_results:
+                            # obtem nomes alternativos
+                            alt_names = []
+                            self.driver.get(url)
+                            time.sleep(5)
+                            data_set = [x for x in self.driver.find_elements(By.CLASS_NAME, 'data-set') if 'Romaji' in x.text or 'Synonyms' in x.text or 'English' in x.text or 'Native' in x.text]
+                            if data_set:
+                                for data in data_set:
+                                    value = data.find_elements(By.CLASS_NAME, 'value')
+                                    if value:
+                                        if '\n' in value[0].text:
+                                            alt_names.extend(value[0].text.split('\n'))
+                                        else:
+                                            alt_names.append(value[0].text)
+                            # verifica se a pesquisa realiza encaixa nesse item desta url
+                            if item in alt_names:
+                                dropdown = self.driver.find_elements(By.XPATH, '//div[@class="dropdown el-dropdown"]')
+                                # verifica se elemento dropdown foi encontrado
+                                if dropdown:
+                                    dropdown[0].click()
+                                    time.sleep(5)
+                                    # busca o as opções do dropdown
+                                    elements_dropdown = self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]')
+                                    if elements_dropdown:
+                                        elements_dropdown = [x for x in self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]') if x.is_displayed()]
+                                        # Caso não encontre nenhum elemento
+                                        if len(elements_dropdown) == 0:
+                                            # inicia a busca até que encontre as opções do dropdown
+                                            while True:
+                                                elements_dropdown = self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]')
+                                                time.sleep(5)
+                                                # filtra apena elemento que estão visiveis
+                                                elements_dropdown = [x for x in self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]') if x.is_displayed()]
+                                                # verificar se encontrou as opções do dropdown
+                                                if len(elements_dropdown) == 0:
+                                                    continue
+                                                else:
+                                                    break
+                                        else:
+                                            # obtem o elemento da lista que pode varia a posição
+                                            # obtem elemento de index 1 se lista maior que 1 se não obtem elemento de index 0
+                                            if len(elements_dropdown) > 1:
+                                                elements_dropdown = elements_dropdown[1]
+                                            else:
+                                                elements_dropdown = elements_dropdown[0]
+                                            # clica na opção "Open List Editor"
+                                            if elements_dropdown.is_displayed():
+                                                options = elements_dropdown.find_elements(By.TAG_NAME, 'li')
+                                                # Clica no checkboxs
+                                                if options:
+                                                    options[-1].click()
+                                                    status = self.driver.find_elements(By.XPATH, '//div[@class="form status"]//input')
+                                                    if status:
+                                                        status[0].click()
+                                                        op_status = self.driver.find_elements(By.XPATH, '//ul[@class="el-scrollbar__view el-select-dropdown__list"]//li')
+                                                        if op_status:
+                                                            if op_status == '0':
+                                                                op_status[1].click()
+                                                            else:
+                                                                op_status[0].click()
+                                                    progress = self.driver.find_elements(By.XPATH, '//div[@class="form progress"]//input')
+                                                    if progress:
+                                                        progress[0].send_keys(list_names.get(item))
+                                                    save = self.driver.find_elements(By.CLASS_NAME, 'save-btn')
+                                                    # Clica no botão de salvar
+                                                    if save:
+                                                        save[0].click()
+                                                    time.sleep(2)
+                                                    check = True
+                                                    break
+                            else:
+                                check = False
+                                continue
+                if check:
+                    break
+        if check == False:
+            print(f"{item} não encontrado")
+                        
+
 if __name__ == "__main__":
-    agc = AnilistGetChapsFromReader()
+    al_robot = AnilistRobot()
     common = Common()
-    s=Service(ChromeDriverManager().install())
     web = Web()
-    username = agc.login_anilist()
+    username = al_robot.login_anilist()
+    # username = 'none'
     # agc.set_list_anilist(driver, 'Megami no Sprinter ', '/manga/101617/Megami-no-Sprinter/', True, True, True)
-    agc.create_custom_list()
+    items = {}
+    print("Digite")
+    while True:
+        item = input()
+        if item:
+            name, chap = item.split('=')
+            items.update({name : chap})
+        else:
+            break
+    al_robot.add_on_anilist(items, 1)
     mangas_list = {}
-    file_anime_names = os.path.join(os.path.join(os.environ['USERPROFILE'], 'Documents'))
+    file_anime_names = os.path.join(os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt'))
     if os.path.isfile(file_anime_names):
         # ler o arquivo
         with open(file_anime_names, 'r', encoding='utf-8') as file_txt:
@@ -696,7 +827,17 @@ if __name__ == "__main__":
 
         mangas_list = dict(sorted(mangas_list.items()))
     else:
-        mangas_list = agc.get_mangas_anilist(username)
-    mangas_not_found = agc.set_list_anilist_mangaschan(mangas_list)
-    agc.set_list_anilist_mangalivre(mangas_list)
+        mangas_list = al_robot.get_mangas_anilist(username)
+    for manga_name, values in mangas_list.items():
+        mangas = al_robot.search_mangaschan(manga_name, mangas_list.get(manga_name)[-1])
+        if mangas:
+            continue
+        else:
+            for value in values[-1]:
+                manga = al_robot.search_mangaschan(value, mangas_list.get(manga_name)[-1])
+                if manga:
+                    checked = True
+                    break
+    mangas_not_found = al_robot.set_list_anilist_mangaschan(mangas_list)
+    al_robot.set_list_anilist_mangalivre(mangas_list)
     
