@@ -89,20 +89,34 @@ if __name__ == "__main__":
             print('Iniciado opção adicionar ao Anilist em {}'.format(common.timestamp()))
             anilist_robot = AnilistRobot()
             items = {}
+            source_list = common.only_read_int("1 - via terminal\n2 - via arquivo\n-> ")
             type_material = common.only_read_int("1 - para mangas\n2 - para animes\n-> ")
-            print('Todos os nomes deve ter o sinal \"=\" seguido da quantidades de episódios/capitulos')
-            print('Siga o exemplo a seguir')
-            print('#'*50)
-            print('Miageru to Kimi wa=1\nYamada-kun to Lv999 no Koi wo Suru=2')
-            print('#'*50)
-            print('Para iniciar não digite nada e apenas pressione o ENTER 2 vezes')
-            while True:
-                item = input()
-                if item:
-                    name, chap = item.split('=')
-                    items.update({name : chap})
-                else:
-                    break
+            if source_list == 1:
+                print('Todos os nomes deve ter o sinal \"--\" seguido da quantidades de episódios/capitulos')
+                print('Siga o exemplo a seguir')
+                print('#'*50)
+                print('Miageru to Kimi wa--1\nYamada-kun to Lv999 no Koi wo Suru--2')
+                print('#'*50)
+                print('Para iniciar não digite nada e apenas pressione o ENTER 2 vezes')
+                while True:
+                    item = input()
+                    if item:
+                        name, chap = item.split('--')
+                        items.update({name : chap})
+                    else:
+                        break
+            elif source_list == 2:
+                file_anime_names = os.path.join(os.environ['USERPROFILE'], 'Documents', 'names.txt')
+                if os.path.isfile(file_anime_names):
+                    # ler o arquivo
+                    with open(file_anime_names, 'r', encoding='utf-8') as file_txt:
+                        content = file_txt.readlines()
+                        content = [x.replace('\n', '') for x in content]
+                        for line in content:
+                            new_content = line.split('--')
+                            if len(new_content) == 2:
+                                name, chap = line.split('--')
+                                items.update({name : chap})
             anilist_robot.add_on_anilist(items, type_material)
             t_f = common.finishCountTime(t_i, True)
             common.print_time(t_f)
