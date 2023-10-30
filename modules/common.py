@@ -25,6 +25,7 @@ class Common():
         caracteres_proibidos = r'[<>:"/\\|?*]'
         # retira caracters acentuados
         name = unidecode(name)
+        name = name.replace('\n', '').replace('\r', '').replace('\t', '')
         # substitui caracteres proibidos do windows por vazio
         name = re.sub(caracteres_proibidos, '', name)
         return name
