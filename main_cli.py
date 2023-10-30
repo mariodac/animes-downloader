@@ -88,6 +88,7 @@ if __name__ == "__main__":
             t_i = common.initCountTime(True)
             print('Iniciado opção adicionar ao Anilist em {}'.format(common.timestamp()))
             anilist_robot = AnilistRobot()
+            anilist_robot.login_anilist()
             items = {}
             source_list = common.only_read_int("1 - via terminal\n2 - via arquivo\n-> ")
             type_material = common.only_read_int("1 - para mangas\n2 - para animes\n-> ")
