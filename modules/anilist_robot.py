@@ -678,117 +678,123 @@ class AnilistRobot():
             list_names (list): lista de nome das obras
             type (int): tipo de obra. 1 para manga 2 para anime
         """
-        for item in list_names:
-            # pesquisa com e sem tag adult
-            params = ['', '&adult=true']
-            for p in params:
-                if type_material == 1:
-                    self.driver.get(f'{cnst.ANILIST}/search/manga?search={item}{p}')
-                elif type_material == 2:
-                    self.driver.get(f'{cnst.ANILIST}/search/anime?search={item}{p}')
-                time.sleep(2)
-                # busca elemento indicando que não houve resultados
-                no_results = self.driver.find_elements(By.CLASS_NAME, 'no-results')
-                results = self.driver.find_elements(By.XPATH, '//div[@class="results cover"]')
-                if no_results:
-                    print(f"{item} não foi encotrado no anilist")
-                if results:
-                    site = self.web.web_scrap(markup=self.driver.page_source)
-                    results_cover = site.find('div', class_='results cover')
-                    if results_cover:
-                        # vai rolando até ter todos os resultados
-                        links_results = results_cover.find_all('a', class_='title')
-                        scroll_height = self.driver.execute_script("return document.getElementsByClassName('results cover')[0].scrollHeight")
-                        while True:
-                            SCROLL_PAUSE_TIME = 2
-                            ActionChains(self.driver).send_keys(Keys.END).perform()
-                            time.sleep(SCROLL_PAUSE_TIME)
-                            scroll_old = scroll_height
-                            scroll_height = self.driver.execute_script("return document.getElementsByClassName('results cover')[0].scrollHeight")
+        try:
+            for item in list_names:
+                # pesquisa com e sem tag adult
+                params = ['', '&adult=true']
+                for p in params:
+                    if type_material == 1:
+                        self.driver.get(f'{cnst.ANILIST}/search/manga?search={item}{p}')
+                    elif type_material == 2:
+                        self.driver.get(f'{cnst.ANILIST}/search/anime?search={item}{p}')
+                    time.sleep(2)
+                    # busca elemento indicando que não houve resultados
+                    no_results = self.driver.find_elements(By.CLASS_NAME, 'no-results')
+                    results = self.driver.find_elements(By.XPATH, '//div[@class="results cover"]')
+                    if no_results:
+                        print(f"{item} não foi encotrado no anilist")
+                    if results:
+                        site = self.web.web_scrap(markup=self.driver.page_source)
+                        results_cover = site.find('div', class_='results cover')
+                        if results_cover:
+                            # vai rolando até ter todos os resultados
                             links_results = results_cover.find_all('a', class_='title')
-                            if scroll_old >= scroll_height:
-                                break
-                        anilist_results = [f'{cnst.ANILIST}{x.get("href")}' for x in links_results if not x.div]
-                        if len(anilist_results) == 0:
-                            print(f'{item} já adicionado no anilist')
-                        # percorre url de cada resultado verificando qual se encaixa na pesquisa        
-                        for url in anilist_results:
-                            # obtem nomes alternativos
-                            alt_names = []
-                            self.driver.get(url)
-                            time.sleep(5)
-                            data_set = [x for x in self.driver.find_elements(By.CLASS_NAME, 'data-set') if 'Romaji' in x.text or 'Synonyms' in x.text or 'English' in x.text or 'Native' in x.text]
-                            if data_set:
-                                for data in data_set:
-                                    value = data.find_elements(By.CLASS_NAME, 'value')
-                                    if value:
-                                        if '\n' in value[0].text:
-                                            alt_names.extend(value[0].text.split('\n'))
-                                        else:
-                                            alt_names.append(value[0].text)
-                            # verifica se a pesquisa realiza encaixa nesse item desta url
-                            if item in alt_names:
-                                dropdown = self.driver.find_elements(By.XPATH, '//div[@class="dropdown el-dropdown"]')
-                                # verifica se elemento dropdown foi encontrado
-                                if dropdown:
-                                    dropdown[0].click()
-                                    time.sleep(5)
-                                    # busca o as opções do dropdown
-                                    elements_dropdown = self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]')
-                                    if elements_dropdown:
-                                        elements_dropdown = [x for x in self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]') if x.is_displayed()]
-                                        # Caso não encontre nenhum elemento
-                                        if len(elements_dropdown) == 0:
-                                            # inicia a busca até que encontre as opções do dropdown
-                                            while True:
-                                                elements_dropdown = self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]')
-                                                time.sleep(5)
-                                                # filtra apena elemento que estão visiveis
-                                                elements_dropdown = [x for x in self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]') if x.is_displayed()]
-                                                # verificar se encontrou as opções do dropdown
-                                                if len(elements_dropdown) == 0:
-                                                    continue
-                                                else:
-                                                    break
-                                        else:
-                                            # obtem o elemento da lista que pode varia a posição
-                                            # obtem elemento de index 1 se lista maior que 1 se não obtem elemento de index 0
-                                            if len(elements_dropdown) > 1:
-                                                elements_dropdown = elements_dropdown[1]
+                            scroll_height = self.driver.execute_script("return document.getElementsByClassName('results cover')[0].scrollHeight")
+                            while True:
+                                SCROLL_PAUSE_TIME = 2
+                                ActionChains(self.driver).send_keys(Keys.END).perform()
+                                time.sleep(SCROLL_PAUSE_TIME)
+                                scroll_old = scroll_height
+                                scroll_height = self.driver.execute_script("return document.getElementsByClassName('results cover')[0].scrollHeight")
+                                links_results = results_cover.find_all('a', class_='title')
+                                if scroll_old >= scroll_height:
+                                    break
+                            anilist_results = [f'{cnst.ANILIST}{x.get("href")}' for x in links_results if not x.div]
+                            if len(anilist_results) == 0:
+                                print(f'{item} já adicionado no anilist')
+                            # percorre url de cada resultado verificando qual se encaixa na pesquisa        
+                            for url in anilist_results:
+                                # obtem nomes alternativos
+                                alt_names = []
+                                self.driver.get(url)
+                                time.sleep(5)
+                                data_set = [x for x in self.driver.find_elements(By.CLASS_NAME, 'data-set') if 'Romaji' in x.text or 'Synonyms' in x.text or 'English' in x.text or 'Native' in x.text]
+                                if data_set:
+                                    for data in data_set:
+                                        value = data.find_elements(By.CLASS_NAME, 'value')
+                                        if value:
+                                            if '\n' in value[0].text:
+                                                alt_names.extend(value[0].text.split('\n'))
                                             else:
-                                                elements_dropdown = elements_dropdown[0]
-                                            # clica na opção "Open List Editor"
-                                            if elements_dropdown.is_displayed():
-                                                options = elements_dropdown.find_elements(By.TAG_NAME, 'li')
-                                                # Clica no checkboxs
-                                                if options:
-                                                    options[-1].click()
-                                                    status = self.driver.find_elements(By.XPATH, '//div[@class="form status"]//input')
-                                                    if status:
-                                                        status[0].click()
-                                                        op_status = self.driver.find_elements(By.XPATH, '//ul[@class="el-scrollbar__view el-select-dropdown__list"]//li')
-                                                        if op_status:
-                                                            if op_status == '0':
-                                                                op_status[1].click()
-                                                            else:
-                                                                op_status[0].click()
-                                                    progress = self.driver.find_elements(By.XPATH, '//div[@class="form progress"]//input')
-                                                    if progress:
-                                                        progress[0].send_keys(list_names.get(item))
-                                                    save = self.driver.find_elements(By.CLASS_NAME, 'save-btn')
-                                                    # Clica no botão de salvar
-                                                    if save:
-                                                        save[0].click()
-                                                    time.sleep(2)
-                                                    check = True
-                                                    break
-                            else:
-                                check = False
-                                continue
-                if check:
-                    break
-        if check == False:
-            print(f"{item} não encontrado")
+                                                alt_names.append(value[0].text)
+                                # verifica se a pesquisa realiza encaixa nesse item desta url
+                                if item in alt_names:
+                                    dropdown = self.driver.find_elements(By.XPATH, '//div[@class="dropdown el-dropdown"]')
+                                    # verifica se elemento dropdown foi encontrado
+                                    if dropdown:
+                                        dropdown[0].click()
+                                        time.sleep(5)
+                                        # busca o as opções do dropdown
+                                        elements_dropdown = self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]')
+                                        if elements_dropdown:
+                                            elements_dropdown = [x for x in self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]') if x.is_displayed()]
+                                            # Caso não encontre nenhum elemento
+                                            if len(elements_dropdown) == 0:
+                                                # inicia a busca até que encontre as opções do dropdown
+                                                while True:
+                                                    elements_dropdown = self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]')
+                                                    time.sleep(5)
+                                                    # filtra apena elemento que estão visiveis
+                                                    elements_dropdown = [x for x in self.driver.find_elements(By.XPATH, '//ul[@class="el-dropdown-menu el-popper el-dropdown-menu--medium"]') if x.is_displayed()]
+                                                    # verificar se encontrou as opções do dropdown
+                                                    if len(elements_dropdown) == 0:
+                                                        continue
+                                                    else:
+                                                        break
+                                            else:
+                                                # obtem o elemento da lista que pode varia a posição
+                                                # obtem elemento de index 1 se lista maior que 1 se não obtem elemento de index 0
+                                                if len(elements_dropdown) > 1:
+                                                    elements_dropdown = elements_dropdown[1]
+                                                else:
+                                                    elements_dropdown = elements_dropdown[0]
+                                                # clica na opção "Open List Editor"
+                                                if elements_dropdown.is_displayed():
+                                                    options = elements_dropdown.find_elements(By.TAG_NAME, 'li')
+                                                    # Clica no checkboxs
+                                                    if options:
+                                                        options[-1].click()
+                                                        status = self.driver.find_elements(By.XPATH, '//div[@class="form status"]//input')
+                                                        if status:
+                                                            status[0].click()
+                                                            op_status = self.driver.find_elements(By.XPATH, '//ul[@class="el-scrollbar__view el-select-dropdown__list"]//li')
+                                                            if op_status:
+                                                                if op_status == '0':
+                                                                    op_status[1].click()
+                                                                else:
+                                                                    op_status[0].click()
+                                                        progress = self.driver.find_elements(By.XPATH, '//div[@class="form progress"]//input')
+                                                        if progress:
+                                                            progress[0].send_keys(list_names.get(item))
+                                                        save = self.driver.find_elements(By.CLASS_NAME, 'save-btn')
+                                                        # Clica no botão de salvar
+                                                        if save:
+                                                            save[0].click()
+                                                        time.sleep(2)
+                                                        check = True
+                                                        break
+                                else:
+                                    check = False
+                                    continue
+                    if check:
+                        break
+            if check == False:
+                print(f"{item} não encontrado")
+        except Exception as err:
+            self.driver.quit()
+            nline = sys.exc_info()[2]
+            if nline:
+                print('Na linha {} -{}'.format(nline.tb_lineno,err))
                         
 
 if __name__ == "__main__":
