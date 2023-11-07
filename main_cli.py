@@ -6,7 +6,7 @@ import re
 import shutil
 from time import sleep
 from anilist_robot import AnilistRobot
-from modules.downloader import DownloaderAnime
+from modules.downloader_anime import DownloaderAnime
 
 if __name__ == "__main__":
     common = Common()
@@ -17,8 +17,10 @@ if __name__ == "__main__":
     
     regex = re.compile('((?:https\:\/\/)|(?:http\:\/\/)|(?:www\.))?([a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(?:\??)[a-zA-Z0-9\-\._\?\,\'\/\\\+&%\$#\=~]+)')
     while option != 0:
-        
-        print("0 - SAIR\n1 - Baixar episódios Saiko Animes\n2 - Baixar episódios AnimeFire.net\n3 - Atualizar Anilist\n4 - Adicionar ao Anilist")
+        print("-"*15)
+        print("| MAIN MENU |")
+        print("-"*15)
+        print("0) SAIR\n1) Baixar episódios Saiko Animes\n2) Baixar episódios AnimeFire.net\n3) Atualizar Anilist\n4) Adicionar ao Anilist")
         option = common.only_read_int("Digite -> ")
         if option == 1:
             out_path = common.create_folder("- Downloaded -", save_path)
@@ -123,6 +125,8 @@ if __name__ == "__main__":
             common.print_time(t_f)
             print('Finalizado opção adicionar ao Anilist em {}'.format(common.timestamp()))
             del anilist_robot
+        elif  option == 0:
+            break
         else:
             print("Opção inválida")
             continue
