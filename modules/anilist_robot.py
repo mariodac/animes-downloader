@@ -5,7 +5,6 @@ import re
 import logging
 sys.path.append(os.path.join(os.path.dirname(__file__), "utils"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "modules"))
-sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "utils"))
 import constants as cnst
 from web import Web
 from common import Common
