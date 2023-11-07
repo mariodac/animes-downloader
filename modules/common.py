@@ -11,6 +11,9 @@ import constants as cnst
 
 
 class Common():
+
+    def shutDown(self):
+        sys.exit(0)
         
     def normalize_name(self, name:str):
         """Normalizar um string para padrão aceitável no windows
@@ -123,14 +126,23 @@ class Common():
         """
         entrada = None
         try:
-            entrada = int(input(string))
+            if string:
+                entrada = int(input(string))
+            else:
+                entrada = int(input("> "))
         except Exception:
             # Loop para leitura de apenas inteiro
             while type(entrada) != int:
                 print('Opção invalida')
-                entrada = input(string)
+                if string:
+                    entrada = input(string)
+                else:
+                    entrada = int(input("> "))
                 try:
-                    entrada = int(entrada)
+                    if string:
+                        entrada = int(entrada)
+                    else:
+                        entrada = int(input("> "))
                 except ValueError:
                     continue
         return entrada
