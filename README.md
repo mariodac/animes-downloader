@@ -11,6 +11,8 @@ Até o momento o projeto possui três opções:
 1. Baixar episódios da Saiko Animes (com ou sem acesso premium) [Tutorial](#item1)
 2. Baixar episódio da AnimeFire [Tutorial](#item2)
 3. Atualizar listas personalizadas de mangás no anilist [Tutorial](#item3)
+4. Adicionar mangás/animes no anilist [Tutorial](#item4)
+5. Baixar episódios Anitsu 
 
 ## Tecnologias utilizadas
 
@@ -161,7 +163,7 @@ Depois de selecionar qual resultado corresponde a sua pesquisa ou caso sua pesqu
 Foi configurado o seguinte esquema para seleção dos episódios:
 
  - Caso deseje baixar apenas 1 episódio, digite apenas o número do episódio desejado, por exemplo, para baixar o episódio 1, basta digitar 1
- - Caso deseje baixar um intervalo de episódios, digite o número inicial seguido do - e após o número final, por exemplo, para baixar do episódio 1 até 10, basta digitar 1-10
+ - Caso deseje baixar um intervalo de episódios, digite o número inicial seguido do - e após o número final, por exemplo, para baixar do episódio 1 até 10, basta digitar 1-10 
  - Caso deseja baixar todos os episódios, basta digitar *
 
  Após selecionar o intervalo de episódios será solicitado a seleção da qualidade do vídeo, digite o numero correspondente a qualidade desejada:
@@ -221,3 +223,20 @@ Nesse arquivo cada linha, representa um mangá, onde primeiro vem o nome princip
 Com isso terá sua biblioteca muita mais organizada de maneira automática!
 
 ![Print](https://github.com/mariodac/animes-downloader/blob/main/.imagens/Screenshot_12.png?raw=true)
+
+<a id="item4"></a>
+
+# Adicionar mangás/animes no anilist
+
+Nesta função é realizada a automação para adicionar mangás/animes no anilist, obtendo os nomes e cápitulos/episódios via terminal ou via arquivo, e adiciona na lista "Reading" do anilist
+
+O arquivo deve ser salvo com nome `names.txt` no caminho `C:/Users/%USERNAME%/Documents`
+
+<a id="default1"></a>
+Siga o seguinte padrão:
+Nome da obra--quantidade de capitulos/episódios
+```
+Yamada-kun to Lv999 no Koi wo Suru--2
+Satanophany--0
+```
+

@@ -2,7 +2,7 @@ import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), "modules"))
 from common import Common
-import re
+from re import compile
 import shutil
 from time import sleep
 from anilist_robot import AnilistRobot
@@ -10,32 +10,33 @@ from modules.downloader_anime import DownloaderAnime
 
 if __name__ == "__main__":
     common = Common()
+    # save_path = common.wx_dirdialog()
     save_path = os.path.join(os.environ['USERPROFILE'], 'Videos')
     
     option = -1
     list_episodes = []
     
-    regex = re.compile('((?:https\:\/\/)|(?:http\:\/\/)|(?:www\.))?([a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(?:\??)[a-zA-Z0-9\-\._\?\,\'\/\\\+&%\$#\=~]+)')
+    regex = compile('((?:https\:\/\/)|(?:http\:\/\/)|(?:www\.))?([a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(?:\??)[a-zA-Z0-9\-\._\?\,\'\/\\\+&%\$#\=~]+)')
     while option != 0:
         print("-"*15)
         print("| MAIN MENU |")
         print("-"*15)
-        print("0) SAIR\n1) Baixar episódios Saiko Animes\n2) Baixar episódios AnimeFire.net\n3) Atualizar Anilist\n4) Adicionar ao Anilist")
+        print("0) SAIR\n1) Baixar episódios Saiko Animes\n2) Baixar episódios AnimeFire.net\n3) Atualizar Anilist\n4) Adicionar ao Anilist\n5) Baixar episódios Anitsu")
         option = common.only_read_int("Digite -> ")
         if option == 1:
             out_path = common.create_folder("- Downloaded -", save_path)
-            downloader = DownloaderAnime(out_path)
             t_i = common.initCountTime(True)
             print('Iniciado opção Baixar episódios Saiko Animes em {}'.format(common.timestamp()))
             login = input("Deseja realizar o login? (S)sim/(n)não\n-> ")
+            downloader = DownloaderAnime(out_path)
             if 's' in login.lower() or 'sim' in login.lower() or 'si' in login.lower() or 'yes' in login.lower() or 'y' in login.lower():
                 downloader.login_saiko()
             else:
                 driver = None
             search = input("Digite o nome do anime -> ")
-            name = downloader.get_anime_saiko(search=search)
-            if name:
-                downloader.down_episodes_saiko(save_path=out_path, name=name)
+            name_anime = downloader.get_anime_saiko(search=search)
+            if name_anime:
+                downloader.down_episodes_saiko(save_path=out_path, anime_name=name_anime)
                 shutil.rmtree(out_path)
             print('Finalizado opção Baixar episódios Saiko Animes em {}'.format(common.timestamp()))
             t_f = common.finishCountTime(t_i, True)
@@ -46,9 +47,9 @@ if __name__ == "__main__":
             t_i = common.initCountTime(True)
             print('Iniciado opção Baixar episódios AnimeFire.net em {}'.format(common.timestamp()))
             search = input("Digite o nome do anime -> ")
-            url, name = downloader.get_anime_animefire_net(search)
-            if url and name:
-                downloader.down_episodes_animefire_net(url, name, save_path)
+            url, name_anime = downloader.get_anime_animefire_net(search)
+            if url and name_anime:
+                downloader.down_episodes_animefire_net(url, name_anime, save_path)
             t_f = common.finishCountTime(t_i, True)
             common.print_time(t_f)
             print('Finalizado opção Baixar episódios AnimeFire.net em {}'.format(common.timestamp()))
@@ -104,8 +105,8 @@ if __name__ == "__main__":
                 while True:
                     item = input()
                     if item:
-                        name, chap = item.split('--')
-                        items.update({name : chap})
+                        name_anime, chap = item.split('--')
+                        items.update({name_anime : chap})
                     else:
                         break
             elif source_list == 2:
@@ -118,13 +119,27 @@ if __name__ == "__main__":
                         for line in content:
                             new_content = line.split('--')
                             if len(new_content) == 2:
-                                name, chap = line.split('--')
-                                items.update({name : chap})
+                                name_anime, chap = line.split('--')
+                                items.update({name_anime : chap})
             anilist_robot.add_on_anilist(items, type_material)
             t_f = common.finishCountTime(t_i, True)
             common.print_time(t_f)
             print('Finalizado opção adicionar ao Anilist em {}'.format(common.timestamp()))
             del anilist_robot
+        elif option == 5:
+            new_path = common.wx_dirdialog()
+            downloader = DownloaderAnime(new_path)
+            t_i = common.initCountTime(True)
+            print('Iniciado opção Baixar episódios Anitsu em {}'.format(common.timestamp()))
+            url = input("Digite a url do anime -> ")
+            if regex.match(url):
+                downloader.downdload_anitsu(url)
+            else:
+                print("Não é url")
+            t_f = common.finishCountTime(t_i, True)
+            common.print_time(t_f)
+            print('Finalizado opção Baixar episódios Anitsu em {}'.format(common.timestamp()))
+            del downloader
         elif  option == 0:
             break
         else:
