@@ -1,20 +1,57 @@
 from unidecode import unidecode
-import os
 import re
 import platform
+import os
 import ctypes
 import sys
 from time import ctime, time
 sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "modules"))
 sys.path.append(os.path.join(os.path.split(os.path.dirname(__file__))[0], "utils"))
 import constants as cnst
+from wx import App, FileDialog, DirDialog, FD_OPEN, FD_FILE_MUST_EXIST, ID_OK, DD_DEFAULT_STYLE, DD_DIR_MUST_EXIST 
+
 
 
 class Common():
 
     def shutDown(self):
         sys.exit(0)
-        
+    
+    def wx_filedialog(self, wildcard):
+        """Abre janela de dialogo para abrir arquivo
+        Args:
+            wildcard (str): filtro de arquivos
+        Returns:
+            str: caminho do arquivo
+            """
+        app = App(None) # type: ignore
+        style = FD_OPEN | FD_FILE_MUST_EXIST
+        dialog = FileDialog(None, 'Selecione o arquivo', wildcard=wildcard, style=style)
+        if dialog.ShowModal() == ID_OK:
+            path = dialog.GetPath()
+            dialog.Destroy()
+            app.Destroy()
+            return path
+        else:
+            path = ""
+            dialog.Destroy()
+            app.Destroy()
+            return path
+
+    def wx_dirdialog(self):
+        """Abre janela de dialogo para abrir pasta
+        Returns:
+            str: caminho da pasta
+        """
+        app = App(None)
+        dialog = DirDialog (None, "Choose input directory", "", DD_DEFAULT_STYLE | DD_DIR_MUST_EXIST)
+        if dialog.ShowModal() == ID_OK:
+            path = dialog.GetPath()
+        else:
+            path = None
+        dialog.Destroy()
+        return path
+
     def normalize_name(self, name:str):
         """Normalizar um string para padrão aceitável no windows
 
