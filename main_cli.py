@@ -4,7 +4,6 @@ sys.path.append(os.path.join(os.path.dirname(__file__), "modules"))
 from common import Common
 from re import compile
 import shutil
-from time import sleep
 from anilist_robot import AnilistRobot
 from modules.downloader_anime import DownloaderAnime
 
