@@ -1,5 +1,3 @@
-import requests
-from bs4 import BeautifulSoup as bs
 from common import Common
 from web import Web
 import constants
