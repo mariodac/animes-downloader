@@ -3,17 +3,14 @@ import sys
 import time
 import re
 import logging
-sys.path.append(os.path.join(os.path.dirname(__file__), "utils"))
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "utils"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "modules"))
 import constants as cnst
 from web import Web
 from common import Common
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
-from selenium import webdriver
-from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.keys import Keys
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
@@ -290,16 +287,6 @@ class AnilistRobot():
             no_releases (bool): Define se mangá está sem lançamentos
             new_release (bool): Define se mangá está como novos lançamentos
             finish (bool): Define se mangás já está finalizado
-        """        
-        """
-         Adiciona manga a lista personalizada do anilist
-         
-         @param driver - Webdriver (navegador)
-         @param manga_name - Nome do manga que será configurar
-         @param values - Lista de valores 
-         @param no_releases - If true don't set release
-         @param new_release - If true set release to new one
-         @param finish - If true finish the anilist with new
         """
         try:
             # abre página do anime no anilist para realizar edições
@@ -803,16 +790,16 @@ if __name__ == "__main__":
     username = al_robot.login_anilist()
     # username = 'none'
     # agc.set_list_anilist(driver, 'Megami no Sprinter ', '/manga/101617/Megami-no-Sprinter/', True, True, True)
-    items = {}
-    print("Digite")
-    while True:
-        item = input()
-        if item:
-            name, chap = item.split('=')
-            items.update({name : chap})
-        else:
-            break
-    al_robot.add_on_anilist(items, 1)
+    # items = {}
+    # print("Digite")
+    # while True:
+    #     item = input()
+    #     if item:
+    #         name, chap = item.split('=')
+    #         items.update({name : chap})
+    #     else:
+    #         break
+    # al_robot.add_on_anilist(items, 1)
     mangas_list = {}
     file_anime_names = os.path.join(os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt'))
     if os.path.isfile(file_anime_names):
