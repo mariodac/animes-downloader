@@ -3,6 +3,7 @@ import sys
 import time
 import re
 import logging
+import requests
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "utils"))
 sys.path.append(os.path.join(os.path.dirname(__file__), "modules"))
 import constants as cnst
@@ -220,14 +221,21 @@ class AnilistRobot():
 
     def search_brmangas(self, manga_name:str, alt_names:list):
         try:
+            # realiza pesquisa
             site = self.web.web_scrap(url=f'{cnst.AGREGADOR_MANGA['BRMANGA']}/?s={manga_name}')
+            # obtem o elementos que contem os resultados
             search_results = site.find('div', class_='listagem row')
+            # obtem todos os resultados
             items_search_results = search_results.find_all('div', class_='item')
+            # verifica a quantidade de resultados
             if len(items_search_results) > 1:
+                # itera todos os resultados encontrados e verifica se algum bate com o que é buscado
                 for item in items_search_results:
-                    if item.text.strip() in alt_names:
+                    if (item.text.strip() in alt_names) or (item.text.strip() == manga_name):
+                        # obtem a url do resultado encotnrado
                         return item.a.get('href')
             elif len(items_search_results) == 1:
+                # obtem a url do resultado encotnrado
                 return items_search_results[0].a.get('href')
             else: return None
         except Exception as err:
@@ -261,8 +269,9 @@ class AnilistRobot():
                         if manga:
                             found = True
                             break
+                # verifica se manga foi encontrado em brmangas
                 if found:
-                    # buscar numero do capitulo do site
+                    # acessa a url do manga
                     while True:
                         try:
                             self.driver.get(f'{manga}')
@@ -271,11 +280,13 @@ class AnilistRobot():
                             time.sleep(5)
                             self.driver.get(f'{manga}')
                     
+                    # buscar numero do capitulo do site
                     time.sleep(2)
                     elements = self.driver.find_elements(By.XPATH, "//ul[@class='capitulos']/li")
                     if elements:    
                         search = re.search('[0-9]+', elements[-1].text)
                         if search:
+                            # obtem numero do ultimo capitulo de brmangas e compara com o que está no anilist
                             last_chap = search.group(0)
                             new_release = int(last_chap) > int(last_chap_anilist)
                             if int(last_chap) < int(last_chap_anilist):
@@ -299,6 +310,16 @@ class AnilistRobot():
                     
             t_f = self.common.finishCountTime(t_0,True)
             self.common.print_time(t_f)
+        except Exception as err:
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err)) 
+
+    def search_mangadex(self, manga_name:str, alt_names:list):
+        try:
+            r = requests.get(f"{cnst.AGREGADOR_MANGA['API-MANGADEDX']}/manga", params={"title": manga_name})
+            print([manga["id"] for manga in r.json()["data"]])
+            ...
         except Exception as err:
             exc_info = sys.exc_info()
             if exc_info:
@@ -364,6 +385,7 @@ class AnilistRobot():
             t_f = self.common.finishCountTime(t_0,True)
             self.common.print_time(t_f)
             # obter alt_name existente
+            file_anime_names = os.path.join(os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt'))
             if os.path.isfile(file_anime_names):
                 # ler o arquivo
                 with open(file_anime_names, 'r', encoding='utf-8') as file_txt:
@@ -936,38 +958,11 @@ if __name__ == "__main__":
     al_robot = AnilistRobot()
     common = Common()
     web = Web()
-    username = al_robot.login_anilist()
-    al_robot.get_mangas_anilist(username)
+    # username = al_robot.login_anilist()
+    # mangas_list = al_robot.get_alt_names(username)
     mangas_list = {}
-    file_anime_names = os.path.join(os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt'))
-    if os.path.isfile(file_anime_names):
-        # ler o arquivo
-        with open(file_anime_names, 'r', encoding='utf-8') as file_txt:
-            content = file_txt.readlines()
-            content = [x.replace('\n', '') for x in content]
-            for line in content:
-                slices = line.split(" -- ")
-                values = slices[-1].split(' || ')
-                alts = values[2:]
-                values = values[:2]
-                # alts = re.sub("(\'|\[|\])+", "", alts)
-                # alts = alts.split(',')
-                values.append(alts)
-                mangas_list.update({slices[0] : values})
-
-        mangas_list = dict(sorted(mangas_list.items()))
-    else:
-        ...
-        # mangas_list = al_robot.get_mangas_anilist(username)
-    for manga_name, values in mangas_list.items():
-        mangas = al_robot.search_brmangas(manga_name, mangas_list.get(manga_name)[-1])
-        if mangas:
-            continue
-        else:
-            for value in values[-1]:
-                manga = al_robot.search_brmangas(value, mangas_list.get(manga_name)[-1])
-                if manga:
-                    break
-    mangas_not_found = al_robot.set_list_anilist_mangaschan(mangas_list)
+    manga_name = 'Yancha Gal no Anjou-san'
+    al_robot.search_mangadex(manga_name, mangas_list[manga_name][-1])
+    mangas_not_found = al_robot.set_list_anilist_brmangas(mangas_list)
     al_robot.set_list_anilist_mangalivre(mangas_list)
     
