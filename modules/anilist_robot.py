@@ -86,21 +86,26 @@ class AnilistRobot():
         Returns:
             str: nome do usuario
         """
-        self.driver.get(f'{cnst.ANILIST}/login')
-        inputs = self.driver.find_elements(By.CLASS_NAME, 'al-input')
-        # insere informações de login
-        # if inputs:
-        #     inputs[0].send_keys('')
-        #     inputs[1].send_keys('')
-        print('Vá no navegador realize o login e resolva o captcha e clique no Login\nAguarde carregar a página inicial para continuar')
-        print('\a')
-        if os.name == 'nt':
-            time.sleep(1)
+        try:
+            self.driver.get(f'{cnst.ANILIST}/login')
+            inputs = self.driver.find_elements(By.CLASS_NAME, 'al-input')
+            # insere informações de login
+            # if inputs:
+            #     inputs[0].send_keys('')
+            #     inputs[1].send_keys('')
+            print('Vá no navegador realize o login e resolva o captcha e clique no Login\nAguarde carregar a página inicial para continuar')
             print('\a')
-            os.system('pause')
-        profile = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, '//a[@class="link"]')))
-        profile_name = profile.get_attribute('href').split('/')[-2]
-        return profile_name
+            if os.name == 'nt':
+                time.sleep(1)
+                print('\a')
+                os.system('pause')
+            profile = WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.XPATH, '//a[@class="link"]')))
+            profile_name = profile.get_attribute('href').split('/')[-2]
+            return profile_name
+        except Exception as err:
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
 
     def create_custom_list(self):
         """Cria as listas personalizadas no anilist
@@ -127,9 +132,9 @@ class AnilistRobot():
 
         except Exception as err:
             self.web.try_quit_webdriver(self.driver)
-            nline = sys.exc_info()[2]
-            if nline:
-                print('Na linha {} -{}'.format(nline.tb_lineno,err))
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
 
     def search_golden(self, anime_name:str, url_search_golden:str):
         """Busca manga no golden mangas
@@ -141,29 +146,34 @@ class AnilistRobot():
         Returns:
             _type_: _description_
         """
-        self.driver.get(url_search_golden+anime_name)
-        site = self.web.web_scrap(markup=self.driver.page_source)
-        mangas = site.find_all('div', class_='mangas')
-        if len(mangas) > 1:
-            print(f'Foram encontrados mais de 1 resultado correspondente ao "{anime_name}"')
-            print('\a')
-            for index, manga in enumerate(mangas):
-                print(f'{index+1} - {manga.text.strip()}')
-            time.sleep(1)
-            print('\a')
-            choice = self.common.only_read_int(len(mangas), 'Sua escolha => ')
-            if choice == -1:
+        try:
+            self.driver.get(url_search_golden+anime_name)
+            site = self.web.web_scrap(markup=self.driver.page_source)
+            mangas = site.find_all('div', class_='mangas')
+            if len(mangas) > 1:
+                print(f'Foram encontrados mais de 1 resultado correspondente ao "{anime_name}"')
+                print('\a')
+                for index, manga in enumerate(mangas):
+                    print(f'{index+1} - {manga.text.strip()}')
+                time.sleep(1)
+                print('\a')
+                choice = self.common.only_read_int(len(mangas), 'Sua escolha => ')
+                if choice == -1:
+                    return None
+                site = None
+                return mangas[choice-1]
+            elif len(mangas) == 0:
+                site = None
                 return None
-            site = None
-            return mangas[choice-1]
-        elif len(mangas) == 0:
-            site = None
-            return None
-        else:
-            site = None
-            return mangas[0]
+            else:
+                site = None
+                return mangas[0]
+        except Exception as err:
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
 
-    def search_mangaschan(self, manga_name:str, alt_names):
+    def search_mangaschan(self, manga_name:str, alt_names:list):
         """Busca mangas no site mangaschan
 
         Args:
@@ -173,7 +183,10 @@ class AnilistRobot():
             BeautifulSoup: elemento que contem o mangá
         """
         try:
-            site = self.web.web_scrap(url=f'{cnst.AGREGADOR_MANGA.get("MANGASCHAN")}/?s='+manga_name)
+            self.driver.get(url=f'{cnst.AGREGADOR_MANGA.get("MANGASCHAN")}/?s='+manga_name)
+            print('Vá no navegador e resolva o captcha e aguarde a página carregar para continuar')
+            os.system('pause')
+            site = self.web.web_scrap(markup=self.driver.page_source)
             mangas = site.find_all('div', class_='bsx')
             if len(mangas) > 1:
                 print(f'Foram encontrados mais de 1 resultado correspondente ao "{manga_name}"')
@@ -201,9 +214,95 @@ class AnilistRobot():
                 return mangas[0]
         except Exception as err:
             self.web.try_quit_webdriver(self.driver)
-            nline = sys.exc_info()[2]
-            if nline:
-                print('Na linha {} -{}'.format(nline.tb_lineno,err))
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
+
+    def search_brmangas(self, manga_name:str, alt_names:list):
+        try:
+            site = self.web.web_scrap(url=f'{cnst.AGREGADOR_MANGA['BRMANGA']}/?s={manga_name}')
+            search_results = site.find('div', class_='listagem row')
+            items_search_results = search_results.find_all('div', class_='item')
+            if len(items_search_results) > 1:
+                for item in items_search_results:
+                    if item.text.strip() in alt_names:
+                        return item.a.get('href')
+            elif len(items_search_results) == 1:
+                return items_search_results[0].a.get('href')
+            else: return None
+        except Exception as err:
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
+
+    def set_list_anilist_brmangas(self, mangas_list:dict):
+        try:
+            print("Iniciando pesquisa no BR MANGAS")
+            t_0 = self.common.initCountTime(True)
+            found = False
+            mangas_not_found = {}
+            needs_check = False
+            no_releases = None
+            new_release = None
+            finish = None
+            for manga_name, values in mangas_list.items():
+                last_chap_anilist = values[1].split('/')[0]
+                if len(values[1].split('/')) > 1:
+                    finish_chap_anilist = values[1].split('/')[1]
+                else:
+                    finish_chap_anilist = None
+
+                mangas = al_robot.search_brmangas(manga_name, mangas_list.get(manga_name)[-1])
+                if mangas:
+                    continue
+                else:
+                    for value in values[-1]:
+                        manga = al_robot.search_brmangas(value, mangas_list.get(manga_name)[-1])
+                        if manga:
+                            found = True
+                            break
+                if found:
+                    # buscar numero do capitulo do site
+                    while True:
+                        try:
+                            self.driver.get(f'{manga}')
+                            break
+                        except:
+                            time.sleep(5)
+                            self.driver.get(f'{manga}')
+                    
+                    time.sleep(2)
+                    elements = self.driver.find_elements(By.XPATH, "//ul[@class='capitulos']/li")
+                    if elements:    
+                        search = re.search('[0-9]+', elements[-1].text)
+                        if search:
+                            last_chap = search.group(0)
+                            new_release = int(last_chap) > int(last_chap_anilist)
+                            if int(last_chap) < int(last_chap_anilist):
+                                print("Checar manga {}".format(manga_name))
+                                needs_check = True
+                                logger.warning("Checar manga {}, ultimo capitulo do Mangas Chan maior que o do Anilist".format(manga_name))
+                                # os.system('pause')
+                            if finish_chap_anilist:
+                                finish = last_chap == finish_chap_anilist
+                            else:
+                                finish = False
+                            no_releases = int(last_chap_anilist) == int(last_chap)
+                    if needs_check:
+                        continue
+                    else:
+                        mangas_not_found.update({manga_name: values})
+                        self.set_list_anilist( manga_name, values[0], no_releases, new_release, finish)
+                        continue
+                else:
+                    logger.warning(f'O item {manga_name} não foi encontrado em BR MANGÁS')
+                    
+            t_f = self.common.finishCountTime(t_0,True)
+            self.common.print_time(t_f)
+        except Exception as err:
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err)) 
 
     def get_mangas_anilist(self, username:str):
         """Obter mangas do anilist
@@ -264,6 +363,28 @@ class AnilistRobot():
             # FIM busca nomes alternativos de cada anime
             t_f = self.common.finishCountTime(t_0,True)
             self.common.print_time(t_f)
+            # obter alt_name existente
+            if os.path.isfile(file_anime_names):
+                # ler o arquivo
+                with open(file_anime_names, 'r', encoding='utf-8') as file_txt:
+                    content = file_txt.readlines()
+                    content = [x.replace('\n', '') for x in content]
+                    for line in content:
+                        slices = line.split(" -- ")
+                        values = slices[-1].split(' || ')
+                        alts = values[2:]
+                        values = values[:2]
+                        # alts = re.sub("(\'|\[|\])+", "", alts)
+                        # alts = alts.split(',')
+                        values.append(alts)
+                        mangas_list.update({slices[0] : values})
+            list_names = []
+            for item_list in mangas_list:
+                ...
+                list_names.extend(titles_links.get(item_list)[-1])
+                list_names.extend(mangas_list.get(item_list)[-1])
+                list_names = list(set(list_names))
+                titles_links[item_list][-1] = list_names
             # Salvar o arquivo 
             out_file = os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt')
             with open(out_file, 'w', encoding='utf-8') as file_txt:
@@ -274,9 +395,9 @@ class AnilistRobot():
             # FIM obter animes do anilist
             return titles_links
         except Exception as err:
-            nline = sys.exc_info()[2]
-            if nline:
-                print('Na linha {} -{}'.format(nline.tb_lineno,err))
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
 
     def set_list_anilist(self, manga_name:str, manga_url:str, no_releases:bool, new_release:bool, finish:bool):
         """Adiciona manga a lista personalizada do anilist
@@ -407,11 +528,11 @@ class AnilistRobot():
                                 time.sleep(2)
         except Exception as err:
             self.driver.quit()
-            nline = sys.exc_info()[2]
+            exc_info = sys.exc_info()
             # Imprime em qual mangá teve erro e imprime a linha com erro
-            if nline:
+            if exc_info:
                 print('Manga com erro {}'.format(manga_name))
-                print('Na linha {} -{}'.format(nline.tb_lineno,err))
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
 
     def set_list_anilist_mangaschan(self, mangas_list:dict):
         """Configura lista do anilist com base nos resultados do mangalivre
@@ -508,12 +629,12 @@ class AnilistRobot():
             return mangas_not_found
         except Exception as err:
             self.driver.quit()
-            nline = sys.exc_info()[2]
-            if nline:
+            exc_info = sys.exc_info()
+            if exc_info:
                 print('Manga com erro {}'.format(manga_name))
-                print('Na linha {} -{}'.format(nline.tb_lineno,err))
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
 
-    def search_mangalivre(self, manga_name):
+    def search_mangalivre(self, manga_name:str):
         """Pesquisa mangás no mangalivre
 
         Args:
@@ -553,10 +674,10 @@ class AnilistRobot():
                 return None
         except Exception as err:
             self.driver.quit()
-            nline = sys.exc_info()[2]
-            if nline:
+            exc_info = sys.exc_info()[2]
+            if exc_info:
                 print('Manga com erro {}'.format(manga_name))
-                print('Na linha {} -{}'.format(nline.tb_lineno,err))
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
 
     def set_list_anilist_mangalivre(self, mangas_list:dict):
         """Configura lista do anilist com base nos resultados do mangalivre
@@ -652,10 +773,10 @@ class AnilistRobot():
             
         except Exception as err:
             self.driver.quit()
-            nline = sys.exc_info()[2]
-            if nline:
+            exc_info = sys.exc_info()
+            if exc_info:
                 print('Manga com erro {}'.format(manga_name))
-                print('Na linha {} -{}'.format(nline.tb_lineno,err))
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
 
     def add_on_anilist(self, list_names:list, type_material:int):
         """Adicionar mangá ou anime no anilist
@@ -778,28 +899,45 @@ class AnilistRobot():
                 print(f"{item} não encontrado")
         except Exception as err:
             self.driver.quit()
-            nline = sys.exc_info()[2]
-            if nline:
-                print('Na linha {} -{}'.format(nline.tb_lineno,err))
-                        
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
+
+    def get_alt_names(self, username:str):
+        try:
+            mangas_list = {}
+            file_anime_names = os.path.join(os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt'))
+            if os.path.isfile(file_anime_names):
+                # ler o arquivo
+                with open(file_anime_names, 'r', encoding='utf-8') as file_txt:
+                    content = file_txt.readlines()
+                    content = [x.replace('\n', '') for x in content]
+                    for line in content:
+                        slices = line.split(" -- ")
+                        values = slices[-1].split(' || ')
+                        alts = values[2:]
+                        values = values[:2]
+                        # alts = re.sub("(\'|\[|\])+", "", alts)
+                        # alts = alts.split(',')
+                        values.append(alts)
+                        mangas_list.update({slices[0] : values})
+
+                mangas_list = dict(sorted(mangas_list.items()))
+            else:
+                mangas_list = al_robot.get_mangas_anilist(username)
+            return mangas_list
+        except Exception as err:
+            self.driver.quit()
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
 
 if __name__ == "__main__":
     al_robot = AnilistRobot()
     common = Common()
     web = Web()
     username = al_robot.login_anilist()
-    # username = 'none'
-    # agc.set_list_anilist(driver, 'Megami no Sprinter ', '/manga/101617/Megami-no-Sprinter/', True, True, True)
-    # items = {}
-    # print("Digite")
-    # while True:
-    #     item = input()
-    #     if item:
-    #         name, chap = item.split('=')
-    #         items.update({name : chap})
-    #     else:
-    #         break
-    # al_robot.add_on_anilist(items, 1)
+    al_robot.get_mangas_anilist(username)
     mangas_list = {}
     file_anime_names = os.path.join(os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt'))
     if os.path.isfile(file_anime_names):
@@ -819,16 +957,16 @@ if __name__ == "__main__":
 
         mangas_list = dict(sorted(mangas_list.items()))
     else:
-        mangas_list = al_robot.get_mangas_anilist(username)
+        ...
+        # mangas_list = al_robot.get_mangas_anilist(username)
     for manga_name, values in mangas_list.items():
-        mangas = al_robot.search_mangaschan(manga_name, mangas_list.get(manga_name)[-1])
+        mangas = al_robot.search_brmangas(manga_name, mangas_list.get(manga_name)[-1])
         if mangas:
             continue
         else:
             for value in values[-1]:
-                manga = al_robot.search_mangaschan(value, mangas_list.get(manga_name)[-1])
+                manga = al_robot.search_brmangas(value, mangas_list.get(manga_name)[-1])
                 if manga:
-                    checked = True
                     break
     mangas_not_found = al_robot.set_list_anilist_mangaschan(mangas_list)
     al_robot.set_list_anilist_mangalivre(mangas_list)

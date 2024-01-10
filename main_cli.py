@@ -63,24 +63,7 @@ if __name__ == "__main__":
             anilist_robot.create_custom_list()
             mangas_list = {}
             file_anime_names = os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt')
-            if os.path.isfile(file_anime_names):
-                # ler o arquivo
-                with open(file_anime_names, 'r', encoding='utf-8') as file_txt:
-                    content = file_txt.readlines()
-                    content = [x.replace('\n', '') for x in content]
-                    for line in content:
-                        slices = line.split(" -- ")
-                        values = slices[-1].split(' || ')
-                        alts = values[2:]
-                        values = values[:2]
-                        # alts = re.sub("(\'|\[|\])+", "", alts)
-                        # alts = alts.split(',')
-                        values.append(alts)
-                        mangas_list.update({slices[0] : values})
-
-                mangas_list = dict(sorted(mangas_list.items()))
-            else:
-                mangas_list = anilist_robot.get_mangas_anilist(username)
+            mangas_list = anilist_robot.get_mangas_anilist(username)
             mangas_not_found = anilist_robot.set_list_anilist_mangaschan(mangas_list)
             t_f = common.finishCountTime(t_i, True)
             common.print_time(t_f)
