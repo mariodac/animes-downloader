@@ -244,6 +244,11 @@ class AnilistRobot():
                 print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
 
     def set_list_anilist_brmangas(self, mangas_list:dict):
+        """Buscar mangás no brmangas e adicionar em lista personalizada no anilist 
+
+        Args:
+            mangas_list (dict): dicionario de mangás
+        """
         try:
             print("Iniciando pesquisa no BR MANGAS")
             t_0 = self.common.initCountTime(True)
@@ -315,10 +320,10 @@ class AnilistRobot():
             if exc_info:
                 print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err)) 
 
-    def search_mangadex(self, manga_name:str, alt_names:list):
+    def search_mangadex(self, manga_name:str, alt_names:list=None):
         try:
             r = requests.get(f"{cnst.AGREGADOR_MANGA['API-MANGADEDX']}/manga", params={"title": manga_name})
-            print([manga["id"] for manga in r.json()["data"]])
+            search_results = [manga for manga in r.json()["data"]]
             ...
         except Exception as err:
             exc_info = sys.exc_info()
@@ -344,6 +349,24 @@ class AnilistRobot():
             # titles_links = [x.a.get('href') for x in titles if x.a]
             entrys = site.find_all('div', class_='entry-card')
             titles_links = {}
+            file_anime_names = os.path.join(os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt'))
+            if os.path.isfile(file_anime_names):
+                choice = input('Arquivo "alt_names.txt" já existente. Deseja atualizar arquivo? (S)im ')
+                if choice.lower() == 's' or choice.lower() == 'sim':
+                    # ler o arquivo
+                    mangas_list = {}
+                    with open(file_anime_names, 'r', encoding='utf-8') as file_txt:
+                        content = file_txt.readlines()
+                        content = [x.replace('\n', '') for x in content]
+                        for line in content:
+                            slices = line.split(" -- ")
+                            values = slices[-1].split(' || ')
+                            alts = values[2:]
+                            values = values[:2]
+                            # alts = re.sub("(\'|\[|\])+", "", alts)
+                            # alts = alts.split(',')
+                            values.append(alts)
+                            mangas_list.update({slices[0] : values})
             # monta dicionario no seguinte esquema {nome_anime:[link, progresso]}
             print("Obtendo lista de animes")
             for entry in entrys:
@@ -382,31 +405,15 @@ class AnilistRobot():
                                     # item.append(value[0].text)
                     item.append(alt_names)
             # FIM busca nomes alternativos de cada anime
-            t_f = self.common.finishCountTime(t_0,True)
-            self.common.print_time(t_f)
             # obter alt_name existente
-            file_anime_names = os.path.join(os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt'))
-            if os.path.isfile(file_anime_names):
-                # ler o arquivo
-                with open(file_anime_names, 'r', encoding='utf-8') as file_txt:
-                    content = file_txt.readlines()
-                    content = [x.replace('\n', '') for x in content]
-                    for line in content:
-                        slices = line.split(" -- ")
-                        values = slices[-1].split(' || ')
-                        alts = values[2:]
-                        values = values[:2]
-                        # alts = re.sub("(\'|\[|\])+", "", alts)
-                        # alts = alts.split(',')
-                        values.append(alts)
-                        mangas_list.update({slices[0] : values})
-            list_names = []
-            for item_list in mangas_list:
-                ...
-                list_names.extend(titles_links.get(item_list)[-1])
-                list_names.extend(mangas_list.get(item_list)[-1])
-                list_names = list(set(list_names))
-                titles_links[item_list][-1] = list_names
+            if choice.lower() == 's' or choice.lower() == 'sim':
+                list_names = []
+                for item_list in mangas_list:
+                    ...
+                    list_names.extend(titles_links.get(item_list)[-1])
+                    list_names.extend(mangas_list.get(item_list)[-1])
+                    list_names = list(set(list_names))
+                    titles_links[item_list][-1] = list_names
             # Salvar o arquivo 
             out_file = os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt')
             with open(out_file, 'w', encoding='utf-8') as file_txt:
@@ -415,6 +422,8 @@ class AnilistRobot():
             print(f"Arquivo salvo em {out_file}")
             # print(titles_links)
             # FIM obter animes do anilist
+            t_f = self.common.finishCountTime(t_0,True)
+            self.common.print_time(t_f)
             return titles_links
         except Exception as err:
             exc_info = sys.exc_info()
@@ -653,7 +662,6 @@ class AnilistRobot():
             self.driver.quit()
             exc_info = sys.exc_info()
             if exc_info:
-                print('Manga com erro {}'.format(manga_name))
                 print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
 
     def search_mangalivre(self, manga_name:str):
@@ -962,7 +970,7 @@ if __name__ == "__main__":
     # mangas_list = al_robot.get_alt_names(username)
     mangas_list = {}
     manga_name = 'Yancha Gal no Anjou-san'
-    al_robot.search_mangadex(manga_name, mangas_list[manga_name][-1])
+    al_robot.search_mangadex(manga_name)
     mangas_not_found = al_robot.set_list_anilist_brmangas(mangas_list)
     al_robot.set_list_anilist_mangalivre(mangas_list)
     

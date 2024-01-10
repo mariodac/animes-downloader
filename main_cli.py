@@ -15,7 +15,7 @@ if __name__ == "__main__":
     option = -1
     list_episodes = []
     
-    regex = compile('((?:https\:\/\/)|(?:http\:\/\/)|(?:www\.))?([a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(?:\??)[a-zA-Z0-9\-\._\?\,\'\/\\\+&%\$#\=~]+)')
+    regex = compile(r'((?:https\:\/\/)|(?:http\:\/\/)|(?:www\.))?([a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(?:\??)[a-zA-Z0-9\-\._\?\,\'\/\\\+&%\$#\=~]+)')
     while option != 0:
         print("-"*15)
         print("| MAIN MENU |")
@@ -64,7 +64,7 @@ if __name__ == "__main__":
             mangas_list = {}
             file_anime_names = os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt')
             mangas_list = anilist_robot.get_mangas_anilist(username)
-            mangas_not_found = anilist_robot.set_list_anilist_mangaschan(mangas_list)
+            mangas_not_found = anilist_robot.set_list_anilist_brmangas(mangas_list)
             t_f = common.finishCountTime(t_i, True)
             common.print_time(t_f)
             print('Finalizado opção Atualizar Anilist em {}'.format(common.timestamp()))
