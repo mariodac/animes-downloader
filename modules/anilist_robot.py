@@ -432,6 +432,78 @@ class AnilistRobot():
             if exc_info:
                 print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err)) 
 
+    def set_list_anilist_mangadex(self, manga_list:dict):
+        try:
+            ...
+        except Exception as err:
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err)) 
+
+    def search_lermanga(self, manga_name:str, alt_names:list):
+        try:
+            ...
+        except Exception as err:
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err)) 
+
+    def set_list_anilist_lermanga(self, manga_list:dict):
+        try:
+          ...
+        except Exception as err:
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
+
+    def search_manhastro(self, manga_name:str, alt_names:list):
+        try:
+          ...
+        except Exception as err:
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
+
+    def set_list_anilist_manhastro(self, manga_list:dict):
+        try:
+            ...
+        except Exception as err:
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
+    
+    def search_slimeread(self, manga_name:str, alt_names:list):
+        try:
+            ...
+        except Exception as err:
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
+
+    def set_list_anilist_slimeread(self, manga_list:dict):
+        try:
+            ...
+        except Exception as err:
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
+
+    def search_tsukimangas(self, manga_name:str, alt_names:list):
+        try:
+            ...
+        except Exception as err:
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
+
+    def set_list_anilist_tsukimangas(self, manga_list:dict):
+        try:
+            ...
+        except Exception as err:
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
+
     def get_alt_names_anilist(self, entrys):
         """_summary_
         """
