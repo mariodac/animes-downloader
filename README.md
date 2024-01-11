@@ -72,7 +72,7 @@ env\Scripts\pip install -r requirements.txt
     <tbody>
         <tr>
             <td><a href="https://saikoanimes.net"><img src="https://www.google.com/s2/favicons?domain=https://saikoanimes.net"> Saikô Animes</a></td>
-            <td><a href="https://mangaschan.net"><img src="https://www.google.com/s2/favicons?domain=https://mangaschan.net"> Mangás Chan</a></td>
+            <td><a href="https://www.brmangas.net"><img src="https://www.google.com/s2/favicons?domain=https://www.brmangas.net"> Br Mangás</a></td>
             <td><a href="https://anilist.co"><img src="https://www.google.com/s2/favicons?domain=https://anilist.co"> Anilist</a></td>
         </tr>
         <tr>
