@@ -63,7 +63,10 @@ if __name__ == "__main__":
             anilist_robot.create_custom_list()
             mangas_list = {}
             mangas_list = anilist_robot.get_mangas_anilist(username)
+            mangas_list = dict(sorted(mangas_list.items()))
             mangas_not_found = anilist_robot.set_list_anilist_brmangas(mangas_list)
+            while len(mangas_not_found) > 1:
+                ...
             t_f = common.finishCountTime(t_i, True)
             common.print_time(t_f)
             print('Finalizado opção Atualizar Anilist em {}'.format(common.timestamp()))

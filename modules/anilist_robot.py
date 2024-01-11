@@ -39,6 +39,7 @@ class AnilistRobot():
         self.common = Common()
         self.web = Web()
         self.driver = self.web.init_webdriver()
+        # self.driver.execute_cdp_cmd('Network.setUserAgentOverride', {'userAgent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/119.0.0.0 Safari/537.36 OPR/105.0.0.0'})
 
     def __del__(self):
         """Função destrutora, fecha o navegador
@@ -191,13 +192,11 @@ class AnilistRobot():
             mangas = site.find_all('div', class_='bsx')
             if len(mangas) > 1:
                 print(f'Foram encontrados mais de 1 resultado correspondente ao "{manga_name}"')
-                choice = 1
                 for manga in mangas:
                     name_manga = manga.find('div',  class_='tt')
                     if name_manga:
                         name_manga = name_manga.text
                         name_manga = self.common.normalize_name(name_manga)
-                    manga_search = re.search(f'{manga_name}', name_manga,re.IGNORECASE)
                     if name_manga in alt_names:
                         mangas = [manga]
                         break
@@ -215,6 +214,105 @@ class AnilistRobot():
                 return mangas[0]
         except Exception as err:
             self.web.try_quit_webdriver(self.driver)
+            exc_info = sys.exc_info()
+            if exc_info:
+                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
+
+    def set_list_anilist_mangaschan(self, mangas_list:dict):
+        """Configura lista do anilist com base nos resultados do mangalivre
+
+        Args:
+            mangas_list (dict): Dicionario com informações do mangá
+        """
+        try:
+            mangas_not_found = {}
+            needs_check = False
+            no_releases = None
+            new_release = None
+            finish = None
+            # compara o progresso do anilist com o do agregador manga
+            print("Iniciando pesquisa no MANGAS CHAN mangas")
+            t_0 = self.common.initCountTime(True)
+            for manga_name, values in mangas_list.items():
+                last_chap_anilist = values[1].split('/')[0]
+                if len(values[1].split('/')) > 1:
+                    finish_chap_anilist = values[1].split('/')[1]
+                else:
+                    finish_chap_anilist = None
+
+                checked = False
+                # pesquisa anime atual no mangas chan
+                while True:
+                    manga = self.search_mangaschan(manga_name, mangas_list.get(manga_name)[-1])
+                    if manga:
+                        checked = True
+                        break
+                    else:
+                        for value in values[-1]:
+                            manga = self.search_mangaschan(value, mangas_list.get(manga_name)[-1])
+                            if manga:
+                                checked = True
+                                break
+                        if not checked:
+                            logger.warning(f'Manga {manga_name} não encontrado')
+                            print(f'Manga {manga_name} não encontrado')
+                            print('\a')
+                            time.sleep(1)
+                            # print('\a')
+                            # os.system('pause')
+                            # new_name = input('Digite outro nome >> ')
+                            # manga = self.search_mangaschan(new_name, url_search_agregador)
+                            if manga:
+                                checked = True
+                            else:
+                                logger.warning(f'Manga {manga_name} não encontrado')
+                                checked = False
+                            break
+                        else:
+                            break
+                
+                if checked:
+                    if manga:
+                        if manga.a:
+                            while True:
+                                try:
+                                    self.driver.get(f'{manga.a.get("href")}')
+                                    break
+                                except:
+                                    time.sleep(5)
+                                    self.driver.get(f'{manga.a.get("href")}')
+                            
+                            time.sleep(2)
+                            elements = self.driver.find_elements(By.XPATH, "//ul[@class='clstyle']/li")
+                            if elements:    
+                                search = re.search('[0-9]+', elements[0].text)
+                                if search:
+                                    last_chap = search.group(0)
+                                    new_release = int(last_chap) > int(last_chap_anilist)
+                                    if int(last_chap) < int(last_chap_anilist):
+                                        print("Checar manga {}".format(manga_name))
+                                        needs_check = True
+                                        logger.warning("Checar manga {}, ultimo capitulo do Mangas Chan maior que o do Anilist".format(manga_name))
+                                        # os.system('pause')
+                                    if finish_chap_anilist:
+                                        finish = last_chap == finish_chap_anilist
+                                    else:
+                                        finish = False
+                                    no_releases = int(last_chap_anilist) == int(last_chap)
+                
+                else:
+                    mangas_not_found.update({manga_name: values})
+                    continue
+                
+                if needs_check:
+                    continue
+                else:
+                    self.set_list_anilist( manga_name, values[0], no_releases, new_release, finish)
+            t_f = self.common.finishCountTime(t_0,True)
+            self.common.print_time(t_f)
+            return mangas_not_found
+        except Exception as err:
+            self.driver.quit()
             exc_info = sys.exc_info()
             if exc_info:
                 print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
@@ -258,6 +356,7 @@ class AnilistRobot():
             no_releases = None
             new_release = None
             finish = None
+            mangas_found = 0
             for manga_name, values in mangas_list.items():
                 last_chap_anilist = values[1].split('/')[0]
                 if len(values[1].split('/')) > 1:
@@ -304,8 +403,9 @@ class AnilistRobot():
                         mangas_not_found.update({manga_name: values})
                         continue
                     else:
-                        print(f'Mangá {manga_name} encontrado')
+                        # print(f'Mangá {manga_name} encontrado')
                         self.set_list_anilist( manga_name, values[0], no_releases, new_release, finish)
+                        mangas_found += 1
                         continue
                 else:
                     manga_name = self.common.normalize_name(manga_name)
@@ -314,6 +414,8 @@ class AnilistRobot():
                     
             t_f = self.common.finishCountTime(t_0,True)
             self.common.print_time(t_f)
+            print(f'Foram atualizados {mangas_found} mangas no ANILIST ')
+            print(f'{len(mangas_found)} mangas não foram atualizados')
             return mangas_not_found
         except Exception as err:
             exc_info = sys.exc_info()
@@ -377,8 +479,6 @@ class AnilistRobot():
             exc_info = sys.exc_info()
             if exc_info:
                 print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err)) 
-
-
 
     def get_mangas_anilist(self, username:str):
         """Obter mangas do anilist
@@ -584,105 +684,6 @@ class AnilistRobot():
             # Imprime em qual mangá teve erro e imprime a linha com erro
             if exc_info:
                 print('Manga com erro {}'.format(manga_name))
-                print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
-
-    def set_list_anilist_mangaschan(self, mangas_list:dict):
-        """Configura lista do anilist com base nos resultados do mangalivre
-
-        Args:
-            mangas_list (dict): Dicionario com informações do mangá
-        """
-        try:
-            mangas_not_found = {}
-            needs_check = False
-            no_releases = None
-            new_release = None
-            finish = None
-            # compara o progresso do anilist com o do agregador manga
-            print("Iniciando pesquisa no MANGAS CHAN mangas")
-            t_0 = self.common.initCountTime(True)
-            for manga_name, values in mangas_list.items():
-                last_chap_anilist = values[1].split('/')[0]
-                if len(values[1].split('/')) > 1:
-                    finish_chap_anilist = values[1].split('/')[1]
-                else:
-                    finish_chap_anilist = None
-
-                checked = False
-                # pesquisa anime atual no mangas chan
-                while True:
-                    manga = self.search_mangaschan(manga_name, mangas_list.get(manga_name)[-1])
-                    if manga:
-                        checked = True
-                        break
-                    else:
-                        for value in values[-1]:
-                            manga = self.search_mangaschan(value, mangas_list.get(manga_name)[-1])
-                            if manga:
-                                checked = True
-                                break
-                        if not checked:
-                            logger.warning(f'Manga {manga_name} não encontrado')
-                            print(f'Manga {manga_name} não encontrado')
-                            print('\a')
-                            time.sleep(1)
-                            # print('\a')
-                            # os.system('pause')
-                            # new_name = input('Digite outro nome >> ')
-                            # manga = self.search_mangaschan(new_name, url_search_agregador)
-                            if manga:
-                                checked = True
-                            else:
-                                logger.warning(f'Manga {manga_name} não encontrado')
-                                checked = False
-                            break
-                        else:
-                            break
-                
-                if checked:
-                    if manga:
-                        if manga.a:
-                            while True:
-                                try:
-                                    self.driver.get(f'{manga.a.get("href")}')
-                                    break
-                                except:
-                                    time.sleep(5)
-                                    self.driver.get(f'{manga.a.get("href")}')
-                            
-                            time.sleep(2)
-                            elements = self.driver.find_elements(By.XPATH, "//ul[@class='clstyle']/li")
-                            if elements:    
-                                search = re.search('[0-9]+', elements[0].text)
-                                if search:
-                                    last_chap = search.group(0)
-                                    new_release = int(last_chap) > int(last_chap_anilist)
-                                    if int(last_chap) < int(last_chap_anilist):
-                                        print("Checar manga {}".format(manga_name))
-                                        needs_check = True
-                                        logger.warning("Checar manga {}, ultimo capitulo do Mangas Chan maior que o do Anilist".format(manga_name))
-                                        # os.system('pause')
-                                    if finish_chap_anilist:
-                                        finish = last_chap == finish_chap_anilist
-                                    else:
-                                        finish = False
-                                    no_releases = int(last_chap_anilist) == int(last_chap)
-                
-                else:
-                    mangas_not_found.update({manga_name: values})
-                    continue
-                
-                if needs_check:
-                    continue
-                else:
-                    self.set_list_anilist( manga_name, values[0], no_releases, new_release, finish)
-            t_f = self.common.finishCountTime(t_0,True)
-            self.common.print_time(t_f)
-            return mangas_not_found
-        except Exception as err:
-            self.driver.quit()
-            exc_info = sys.exc_info()
-            if exc_info:
                 print('Na linha {} -{}'.format(exc_info[2].tb_lineno,err))
 
     def search_mangalivre(self, manga_name:str):
@@ -991,8 +992,9 @@ if __name__ == "__main__":
     al_robot = AnilistRobot()
     common = Common()
     web = Web()
+    mangas_list = al_robot.get_alt_names('mariodac')
     username = al_robot.login_anilist()
-    mangas_list = al_robot.get_alt_names(username)
+    al_robot.set_list_anilist_brmangas(mangas_list)
     manga_name = 'Yancha Gal no Anjou-san'
     al_robot.search_mangadex(manga_name)
     mangas_not_found = al_robot.set_list_anilist_brmangas(mangas_list)
