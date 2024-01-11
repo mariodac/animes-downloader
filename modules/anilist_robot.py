@@ -415,7 +415,7 @@ class AnilistRobot():
             t_f = self.common.finishCountTime(t_0,True)
             self.common.print_time(t_f)
             print(f'Foram atualizados {mangas_found} mangas no ANILIST ')
-            print(f'{len(mangas_found)} mangas não foram atualizados')
+            print(f'{len(mangas_not_found)} mangas não foram atualizados')
             return mangas_not_found
         except Exception as err:
             exc_info = sys.exc_info()
