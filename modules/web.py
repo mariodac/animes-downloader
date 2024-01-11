@@ -210,7 +210,7 @@ class Web():
             chrome_options.add_argument("--log-level=3")
             chrome_options.add_argument("--ignore-certificate-errors")
             chrome_options.add_argument("--ignore-ssl-errors")
-            chrome_options.add_argument("user-agent=Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 Chrome/120.0.0.0 Mobile Safari/537.36")
+            # chrome_options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/119.0.0.0 Safari/537.36 OPR/105.0.0.0")
             chrome_options.binary_location = self.binary_location
             if download_output:
                 download_output = os.path.normpath(download_output)
@@ -327,3 +327,8 @@ class Web():
 
 if __name__ == '__main__':
     Web('animes_downloads')
+    from selenium import webdriver
+    from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
+    driver = webdriver.Chrome(executable_path='/path/to/chromedriver')
+    driver.execute_cdp_cmd('Network.setUserAgentOverride', {'userAgent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/83.0.4103.97 Safari/537.36'})
