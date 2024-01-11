@@ -62,7 +62,6 @@ if __name__ == "__main__":
             # anilist_get_chaps_from_reader.set_list_anilist(driver, 'Megami no Sprinter ', '/manga/101617/Megami-no-Sprinter/', True, True, True)
             anilist_robot.create_custom_list()
             mangas_list = {}
-            file_anime_names = os.path.join(os.environ['USERPROFILE'], 'Documents', 'alt_names.txt')
             mangas_list = anilist_robot.get_mangas_anilist(username)
             mangas_not_found = anilist_robot.set_list_anilist_brmangas(mangas_list)
             t_f = common.finishCountTime(t_i, True)
