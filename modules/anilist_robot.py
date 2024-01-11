@@ -290,7 +290,7 @@ class AnilistRobot():
                                 last_chap = search.group(0)
                                 new_release = int(last_chap) > int(last_chap_anilist)
                                 if int(last_chap) < int(last_chap_anilist):
-                                    print("Checar manga {}".format(manga_name))
+                                    # print("Checar manga {}".format(manga_name))
                                     needs_check = True
                                     manga_name = self.common.normalize_name(manga_name)
                                     logger.warning("Checar manga {}, ultimo capitulo do BRAMANGAS maior que o do Anilist".format(manga_name))
@@ -301,9 +301,10 @@ class AnilistRobot():
                                     finish = False
                                 no_releases = int(last_chap_anilist) == int(last_chap)
                     if needs_check:
+                        mangas_not_found.update({manga_name: values})
                         continue
                     else:
-                        mangas_not_found.update({manga_name: values})
+                        print(f'Mangá {manga_name} encontrado')
                         self.set_list_anilist( manga_name, values[0], no_releases, new_release, finish)
                         continue
                 else:
