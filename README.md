@@ -28,7 +28,7 @@ Até o momento o projeto possui três opções:
 Caso não queira fazer o passos a seguir manualmente. Apenas execute o [Script Windows](start_CLI.bat)
 
 É necessário ter o seguinte item para executar o projeto:
-- Python 3.7+ [Windows](https://www.python.org/downloads/)
+- Python 3.7+ [Baixar para Windows](https://www.python.org/downloads/) | [Baixar para Linux](https://www.geeksforgeeks.org/how-to-download-and-install-python-latest-version-on-linux/)
 - Google Chrome última versão [Baixe o chrome](https://www.google.com/intl/pt-BR/chrome/)
 
 É recomendado a criação de ambiente virtual para execução do projeto, recomendo seguir os passos a seguir:
