@@ -23,12 +23,13 @@ Até o momento o projeto possui três opções:
 
 ### Baixe seu executável [aqui](https://github.com/mariodac/animes-downloader/releases/download/beta/beta_teste_CLI.exe)
 
-## Dependências
+## Dependências/Requisitos
 
 Caso não queira fazer o passos a seguir manualmente. Apenas execute o [Script Windows](start_CLI.bat)
 
 É necessário ter o seguinte item para executar o projeto:
 - Python 3.7+ [Windows](https://www.python.org/downloads/)
+- Google Chrome última versão [Baixe o chrome](https://www.google.com/intl/pt-BR/chrome/)
 
 É recomendado a criação de ambiente virtual para execução do projeto, recomendo seguir os passos a seguir:
 
