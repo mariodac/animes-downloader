@@ -21,7 +21,7 @@ Até o momento o projeto possui três opções:
   <img align="center" alt="Selenium" height="30" width="40" src="https://raw.githubusercontent.com/devicons/devicon/master/icons/selenium/selenium-original.svg">
 </div><br>
 
-### Baixe seu executável [aqui](https://github.com/mariodac/animes-downloader/releases/download/Beta_0.1/beta_0.1_CLI.exe)
+### Baixe sua última versão do executável [aqui](https://github.com/mariodac/animes-downloader/releases/download/beta_v0.2/beta_0.2_CLI.exe)
 
 ## Dependências/Requisitos
 
@@ -72,12 +72,17 @@ env\Scripts\pip install -r requirements.txt
     </thead>
     <tbody>
         <tr>
-            <td><a href="https://saikoanimes.net"><img src="https://www.google.com/s2/favicons?domain=https://saikoanimes.net"> Saikô Animes</a></td>
-            <td><a href="https://www.brmangas.net"><img src="https://www.google.com/s2/favicons?domain=https://www.brmangas.net"> Br Mangás</a></td>
-            <td><a href="https://anilist.co"><img src="https://www.google.com/s2/favicons?domain=https://anilist.co"> Anilist</a></td>
+            <td><a href="https://saikoanimes.net"><img src="https://www.google.com/s2/favicons?domain=https://saikoanimes.net">Saikô Animes</a></td>
+            <td><a href="https://www.brmangas.net"><img src="https://www.google.com/s2/favicons?domain=https://www.brmangas.net">Br Mangás</a></td>
+            <td><a href="https://anilist.co"><img src="https://www.google.com/s2/favicons?domain=https://anilist.co">Anilist</a></td>
         </tr>
         <tr>
-            <td><a href="https://animefire.net"><img src="https://www.google.com/s2/favicons?domain=https://animefire.net"> AnimeFire.net</a></td>
+            <td><a href="https://animefire.net"><img src="https://www.google.com/s2/favicons?domain=https://animefire.net">AnimeFire.net</a></td>
+            <td></td>
+            <td></td>
+        </tr>
+        <tr>
+            <td><a href="https://anitsu.online"><img src="https://www.google.com/s2/favicons?domain=https://anitsu.online/home">Anitsu</a></td>
             <td></td>
             <td></td>
         </tr>
