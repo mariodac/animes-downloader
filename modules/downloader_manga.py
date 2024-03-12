@@ -17,7 +17,9 @@ class DownloaderManga:
         self.web = Web()
         self.common = Common()
         self.save_path = os.path.join(os.environ['USERPROFILE'], 'Pictures')
-        self.web_driver = self.web.init_webdriver(default=False, headless=False, saida=self.save_path)
+        self.web_driver = self.web.init_webdriver(default=False, headless=False, output=self.save_path)
+        self.web_driver.minimize_window()
+    
     def __del__(self):
         """Função destrutora, fecha o navegador
         """
