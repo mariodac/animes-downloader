@@ -9,8 +9,11 @@ from modules.downloader_anime import DownloaderAnime
 
 if __name__ == "__main__":
     common = Common()
-    # save_path = common.wx_dirdialog()
-    save_path = os.path.join(os.environ['USERPROFILE'], 'Videos')
+    print('Selecione o diretório que será salvo os arquivos')
+    save_path = common.wx_dirdialog()
+    if save_path == None:
+        save_path = os.path.join(os.environ['USERPROFILE'], 'Videos')
+    print(f'Arquivos serão salvos em {save_path}')
     
     option = -1
     list_episodes = []
@@ -41,6 +44,7 @@ if __name__ == "__main__":
             t_f = common.finishCountTime(t_i, True)
             common.print_time(t_f)
             del downloader
+        
         elif option == 2:
             downloader = DownloaderAnime(save_path)
             t_i = common.initCountTime(True)
@@ -71,6 +75,7 @@ if __name__ == "__main__":
             common.print_time(t_f)
             print('Finalizado opção Atualizar Anilist em {}'.format(common.timestamp()))
             del anilist_robot
+        
         elif option == 4:
             t_i = common.initCountTime(True)
             print('Iniciado opção adicionar ao Anilist em {}'.format(common.timestamp()))
@@ -110,11 +115,12 @@ if __name__ == "__main__":
             common.print_time(t_f)
             print('Finalizado opção adicionar ao Anilist em {}'.format(common.timestamp()))
             del anilist_robot
+        
         elif option == 5:
-            new_path = common.wx_dirdialog()
-            downloader = DownloaderAnime(new_path)
+            downloader = DownloaderAnime(save_path)
             t_i = common.initCountTime(True)
             print('Iniciado opção Baixar episódios Anitsu em {}'.format(common.timestamp()))
+            print('Obtenha o link aqui -> https://anitsu.online')
             url = input("Digite a url do anime -> ")
             if regex.match(url):
                 downloader.downdload_anitsu(url)
@@ -124,8 +130,10 @@ if __name__ == "__main__":
             common.print_time(t_f)
             print('Finalizado opção Baixar episódios Anitsu em {}'.format(common.timestamp()))
             del downloader
+        
         elif  option == 0:
             break
+        
         else:
             print("Opção inválida")
             continue
