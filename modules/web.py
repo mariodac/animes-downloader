@@ -146,7 +146,7 @@ class Web():
             print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.wait_download_file.__name__, exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
             sys.exit()
 
-    def init_webdriver(self,default=True, headless=False, saida:str=None):
+    def init_webdriver(self,default=True, headless=False, output:str=None):
         """Inicia navegador automatizado google chrome
 
         Args:
@@ -158,12 +158,13 @@ class Web():
             webdriver: navegador automatizado google chrome configurado
         """
         try:
+            print('Iniciando navegador automatizado google chrome')
             s=Service(ChromeDriverManager().install())
             if default:
                 if headless:
-                    driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=True, download_output=saida))
+                    driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=True, download_output=output))
                 else:    
-                    driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=False, download_output=saida))    
+                    driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=False, download_output=output))    
             else:
                 # caminho das extensões
                 extension_path = os.path.join(os.path.split(os.path.dirname(os.path.realpath(__file__)))[0], 'extensions')
@@ -172,14 +173,14 @@ class Web():
                 # extension = [os.path.join(extension_path, 'enable_right_click.crx')]
                 try:
                     if headless:
-                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=True, download_output=saida, crx_extension=extensions))
+                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=True, download_output=output, crx_extension=extensions))
                     else:
-                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=False, download_output=saida, crx_extension=extensions))
+                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=False, download_output=output, crx_extension=extensions))
                 except:
                     if headless:
-                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=True, download_output=saida))
+                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=True, download_output=output))
                     else:
-                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=False, download_output=saida))
+                        driver = webdriver.Chrome(service=s, options=self.optionsChrome(headless=False, download_output=output))
             return driver
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
