@@ -31,7 +31,8 @@ class DownloaderAnime():
         self.web = Web()
         self.common = Common()
         self.save_path = save_path
-        self.web_driver = self.web.init_webdriver(default=False, saida=self.save_path)
+        self.web_driver = self.web.init_webdriver(default=False, output=self.save_path)
+        self.web_driver.minimize_window()
 
     def __del__(self):
         """Função destrutora, fecha o navegador
@@ -74,7 +75,7 @@ class DownloaderAnime():
             file_get = open(file_name, 'r+', encoding='utf-8')
             texts_file = file_get.readlines()
             texts_file = [x.replace('\n', '') for x in texts_file]
-            self.web_driver = self.web.init_webdriver(True, saida=saida)
+            self.web_driver = self.web.init_webdriver(True, output=saida)
             for index,link in enumerate(links):
                 print("Baixando episodio {} de {}".format(index+1, len(links)))
                 self.web_driver.get(link)
@@ -84,7 +85,7 @@ class DownloaderAnime():
                 elements = site.find('font', text="Name:")
                 if elements:
                     # busca do elemento com o nome do arquivo
-                    elements = [x for x in elements.next_elements if x.name == 'font' if re.search("\.[0-9a-z]+$", x.text)]
+                    elements = [x for x in elements.next_elements if x.name == 'font' if re.search(r"\.[0-9a-z]+$", x.text)]
                     # se achar o elemento pega a string com o nome
                     if elements:
                         file_name = elements[0].text
@@ -362,6 +363,7 @@ class DownloaderAnime():
             str, str: link do anime e nome do anime
         """
         try:
+            print(f'Realizando busca do anime "{search}"')
             # formata busca para forma utilizada na url
             search = search.replace(' ', '-')
             search = search.lower()
@@ -408,18 +410,33 @@ class DownloaderAnime():
             # para selecionar o intervalo de episódios
             eps = self.select_range_episodes(select_eps, eps)
             print("Digite o numero da qualidade: ")
+            selected_resolution = False
             for ep in eps:
                 # abre o link do episodio
                 site = self.web.web_scrap(url=ep.get('href'))
                 # obtem o botão de download
                 link = site.find('a', id='dw')
                 site = self.web.web_scrap(url=link.get('href'))
-                qualidades = site.find_all('a', class_='mb-1')
-                qualidades_name = [x.text for x in qualidades]
-                index = self.get_option_index(qualidades_name)
-                if index-1 in range(0, len(qualidades)):
+                resolutions = site.find_all('a', class_='mb-1')
+                resolutions_name = []
+                for item_resolution in resolutions:
+                    if item_resolution.text == 'SD':
+                        resolution_name = f'{item_resolution.text} (640 x 480)'
+                    elif item_resolution.text == 'HD':
+                        resolution_name = f'{item_resolution.text} (1280 x 720)'
+                    elif item_resolution.text == 'F-HD':
+                        resolution_name = f'{item_resolution.text} (1920 x 1080)'
+                    resolutions_name.append(resolution_name)
+                if selected_resolution is False:
+                    index = self.get_option_index(resolutions_name)
+                    selected_resolution = True
+                try:
+                    resolutions[index-1]
+                except IndexError:
+                    index = 1
+                if index-1 in range(0, len(resolutions)):
                     # site = self.web.web_scrap(url=qualidades[index-1])
-                    status = self.web.download_archive(url=qualidades[index-1].get('href'), path_archive=dest_dir)
+                    status = self.web.download_archive(url=resolutions[index-1].get('href'), path_archive=dest_dir)
                     if status is False:
                         self.web_driver = self.web.init_webdriver(default=False)
                         sleep(3)
@@ -446,9 +463,9 @@ class DownloaderAnime():
                                     if video:
                                         video[0].click()
                                         # obtem a localização do video na tela
-                                        localizacao = video[0].location
-                                        x = localizacao['x']
-                                        y = localizacao['y']
+                                        screen_location = video[0].location
+                                        x = screen_location['x']
+                                        y = screen_location['y']
                                         # Obter o titulo da janela do WebDriver
                                         window_title = self.web_driver.current_url+' - Google Chrome'
                                         window_index = gw.getAllTitles().index(window_title)
@@ -569,7 +586,7 @@ class DownloaderAnime():
                 print('Exemplos:\nUm itervalo de episódios 1-10\nDeterminados episódios 1,3,4\nTodos os episódios *')
                 print('Digite o intervalo de episódios')
                 select_eps = input('>> ')
-                search = re.search('[0-9\-\,]+|[aA\*]', select_eps)
+                search = re.search(r'[0-9\-\,]+|[aA\*]', select_eps)
                 if search != None: 
                     break
                 else:
@@ -591,7 +608,7 @@ class DownloaderAnime():
             name_dir = element[0].text
             dir_name = self.common.create_folder(name_dir, self.save_path)
         else:
-            element = self.web_driver.find_elements(By.XPATH,'//div[@class="breadcrumb"]//div/following-sibling::div[3]')
+            element = self.web_driver.find_elements(By.XPATH, '//div[@class="crumb svg"]')
             if element:
                 name_dir = element[0].text
                 dir_name = self.common.create_folder(name_dir, self.save_path)
@@ -650,7 +667,7 @@ class DownloaderAnime():
                 # caminho onde é baixado o video
                 out_dir_name = os.path.join(self.save_path, name_file)
                 # caminho com o nome do anime
-                new_dir_name = os.path.join(dir_name, name_file)
+                new_dir_name = os.path.join(out_dir_name, name_file)
                 if (os.path.isfile(out_dir_name)): continue
                 elif (os.path.isfile(new_dir_name)): continue
                 else:
@@ -696,7 +713,9 @@ class DownloaderAnime():
 
 if __name__ == "__main__":
     common = Common()
-    save_path = "H:\Anemes"
+    save_path = common.wx_dirdialog()
+    if save_path == None:
+        save_path = os.path.join(os.environ['USERPROFILE'], 'Videos')
     downloader = DownloaderAnime(save_path)
     # input_user = input("-> ")
     # input_user = "https://anitsu.online/nextcloud/s/tpbdorE4qAnT3qt?path=%2FLetra%20B%2FBlack%20Clover%2FBlack%20Clover%20BD%2001-103"
