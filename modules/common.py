@@ -44,7 +44,7 @@ class Common():
             str: caminho da pasta
         """
         app = App(None)
-        dialog = DirDialog (None, "Choose input directory", "", DD_DEFAULT_STYLE | DD_DIR_MUST_EXIST)
+        dialog = DirDialog (None, "Escolha o diretório", "", DD_DEFAULT_STYLE | DD_DIR_MUST_EXIST)
         if dialog.ShowModal() == ID_OK:
             path = dialog.GetPath()
         else:
@@ -106,6 +106,7 @@ class Common():
         
         try:
             name = name.replace(':', ' - ')
+            name = self.normalize_name(name)
             directory = os.listdir(dirname)
             complete = os.path.join(dirname, name)
             # print(complete)
