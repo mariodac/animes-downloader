@@ -34,7 +34,15 @@ Caso não queira fazer o passos a seguir manualmente. Apenas execute o [Script W
 É recomendado a criação de ambiente virtual para execução do projeto, recomendo seguir os passos a seguir:
 
 <a id="ancora1"></a>
-
+No linux:
+- Para criação do ambiente:
+```
+python3 -m venv env
+```
+- Para ativar o ambiente:
+```
+. env/bin/activate
+```
 
 No windows:
 - Para criação do ambiente:
@@ -51,9 +59,14 @@ Todos as bibliotecas e suas versões estão no arquivo [requirements](requiremen
 
 Para instalar as bibliotecas siga os passos:
 
-**ATENÇÃO [Ative](#ancora1) o seu ambiente antes executar esses comandos!**
+**ATENÇÃO [Ative](#ancora1) o seu ambiente virtual antes executar esses comandos!**
 
-*Será criado o ambiente python*
+*Será criado o ambiente virtual python*
+
+No Linux:
+```
+env/bin/pip install -r requirements.txt
+```
 
 No windows:
 ```
