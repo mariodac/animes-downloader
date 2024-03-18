@@ -11,7 +11,7 @@ if __name__ == "__main__":
     common = Common()
     print('Selecione o diretório que será salvo os arquivos')
     save_path = common.wx_dirdialog()
-    if save_path == None:
+    if save_path is None:
         save_path = os.path.join(os.environ['USERPROFILE'], 'Videos')
     print(f'Arquivos serão salvos em {save_path}')
     
@@ -120,12 +120,17 @@ if __name__ == "__main__":
             downloader = DownloaderAnime(save_path)
             t_i = common.initCountTime(True)
             print('Iniciado opção Baixar episódios Anitsu em {}'.format(common.timestamp()))
-            print('Obtenha o link aqui -> https://anitsu.online')
-            url = input("Digite a url do anime -> ")
-            if regex.match(url):
-                downloader.downdload_anitsu(url)
-            else:
-                print("Não é url")
+            print('1 - Baixar via URL\n2 - Navegar pelo acervo')
+            option_anitsu = input('Selecione -> ')
+            if option_anitsu == '1':
+                print('Obtenha o link aqui -> https://anitsu.online')
+                url = input("Digite a url do anime -> ")
+                if regex.match(url):
+                    downloader.downdload_anitsu(False,url)
+                else:
+                    print("Não é url")
+            elif option_anitsu == '2':
+                downloader.downdload_anitsu(True)
             t_f = common.finishCountTime(t_i, True)
             common.print_time(t_f)
             print('Finalizado opção Baixar episódios Anitsu em {}'.format(common.timestamp()))

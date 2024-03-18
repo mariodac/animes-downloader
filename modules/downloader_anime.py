@@ -33,6 +33,7 @@ class DownloaderAnime():
         self.save_path = save_path
         self.web_driver = self.web.init_webdriver(default=False, output=self.save_path)
         self.web_driver.minimize_window()
+        self.web_driver_wait = WebDriverWait(self.web_driver, 60)
 
     def __del__(self):
         """Função destrutora, fecha o navegador
@@ -598,117 +599,239 @@ class DownloaderAnime():
             fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
             print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.get_anime_ep_index.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
     
-    def downdload_anitsu(self, url:str):
-        self.web_driver.get(url)
-        sleep(2)
-        element = self.web_driver.find_elements(By.XPATH,'//div[@class="breadcrumb"]//div/following-sibling::div[4]')
-        sleep(2)
-        name = "000"
-        if element:
-            name_dir = element[0].text
-            dir_name = self.common.create_folder(name_dir, self.save_path)
-        else:
-            element = self.web_driver.find_elements(By.XPATH, '//div[@class="crumb svg"]')
-            if element:
-                name_dir = element[0].text
-                dir_name = self.common.create_folder(name_dir, self.save_path)
+    def login_anitsu(self):
+        try:
+            regex = re.compile(r"[a-z0-9!#$%&'*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&'*+/=?^_`{|}~-]+)*@(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?")
+            self.web_driver.get('https://anitsu.online/login')
+            email = input('Digite o e-mail -> ')
+            while regex.match(email) is None:
+                print('Digite um e-mail válido')
+                email = input('Digite o e-mail -> ')
+            passwd = getpass.getpass('Digite a senha -> ')
+            email_element = self.web_driver.find_elements(By.CSS_SELECTOR, '.mantine-Input-input.mantine-TextInput-input')
+            if email_element is not None:
+                email_element[0].send_keys(email)
             else:
-                dest_anime_dir = os.path.join(self.save_path, name)
-                new_dest_dir = (os.path.join(os.path.split(self.save_path)[0], os.path.split(dest_anime_dir)[-1]))
-                if os.path.isdir(new_dest_dir) is False:
-                    dir_name = self.common.create_folder(name, self.save_path)
+                return False
+            password_element = self.web_driver.find_elements(By.CSS_SELECTOR, '.mantine-PasswordInput-innerInput')
+            if password_element is not None:
+                password_element[0].send_keys(passwd)
+            else:
+                return False
+            login = self.web_driver.find_elements(By.CSS_SELECTOR, '.mantine-focus-auto.mantine-active.mantine-Button-root.mantine-UnstyledButton-root')
+            if login is not None:
+                login[0].click()
+                print('Realizando login ...')
+            else:
+                return False
+            sleep(2)
+            return True
+        except:
+            exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.login_anitsu.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
+
+    def scroll_bottom_anitsu(self, url=None):
+        if url is not None:
+            self.web_driver.get(url)
         SCROLL_PAUSE_TIME = 2
+        # elementos da lista
+        items_td = self.web_driver.find_elements(By.XPATH, '//td[@class="filename"]')
         # Pega tamanho do scroll
-        scroll_height = self.web_driver.execute_script("return document.getElementById(\"files-public-content\").scrollHeight")
+        scroll_height = self.web_driver.execute_script("return document.getElementById('files-public-content').scrollHeight")
         # rola até o ultimo episódio que está visível
-        self.web_driver.execute_script("document.getElementById(\"files-public-content\").scrollIntoView(false)")
+        self.web_driver.execute_script("arguments[0].scrollIntoView();", items_td[-1])
         # Define o tamanho de rolagem
         scroll_old = scroll_height
         while True:
             # Pega tamanho do scroll
-            scroll_height = self.web_driver.execute_script("return document.getElementById(\"files-public-content\").scrollHeight")
+            items_td = self.web_driver.find_elements(By.XPATH, '//td[@class="filename"]')
+            scroll_height = self.web_driver.execute_script("return document.getElementById('files-public-content').scrollHeight")
             # armazena tamanho antigo antes da rolagem
             scroll_old = scroll_height
             # rola até o ultimo episódio que está visível
-            self.web_driver.execute_script("document.getElementById(\"files-public-content\").scrollIntoView(false)")
+            self.web_driver.execute_script("arguments[0].scrollIntoView();", items_td[-1])
             # Espera página carregar
             sleep(SCROLL_PAUSE_TIME)
             # Verifica se chegou no fim
-            scroll_height = self.web_driver.execute_script("return document.getElementById(\"files-public-content\").scrollHeight")
+            scroll_height = self.web_driver.execute_script("return document.getElementById('files-public-content').scrollHeight")
             if scroll_old >= scroll_height:
                 break
-        elements = self.web_driver.find_elements(By.XPATH, '//a[@class="name"]')
-        if elements:
-            # entrar em cada vídeo
-            """ for index in range(len(elements)):
-                elements = self.web_driver.find_elements(By.XPATH, '//a[@class="name"]')
-                ActionChains(self.web_driver).move_to_element(elements[index]).perform()
-                sleep(2)
-                elements[index].click()
-                sleep(2)
-                element = self.web_driver.find_elements(By.XPATH, '//div[@class="plyr__poster"]')
-                sleep(2)
-                if element: element[0].click()
-                sleep(2)
-                element = self.web_driver.find_elements(By.XPATH,'//div[@class="icons-menu"]//a')
-                if element:
-                    link = element[0].get_attribute('href')
-                    print(link)
-                    element = self.web_driver.find_elements(By.XPATH,'//button[@class="button-vue header-close button-vue--icon-only button-vue--vue-tertiary"]')
-                    if element: 
-                        element[0].click() """
-            for item in elements:
-                # busca o elemento com o nome do arquivo
-                element = item.find_elements(By.CLASS_NAME, 'nametext')
-                index = elements.index(item)
-                name_file = element[0].text.replace("\n","")
-                # move para o elemento atual
-                ActionChains(self.web_driver).move_to_element(item).perform()
-                # caminho onde é baixado o video
-                out_dir_name = os.path.join(self.save_path, name_file)
-                # caminho com o nome do anime
-                new_dir_name = os.path.join(out_dir_name, name_file)
-                if (os.path.isfile(out_dir_name)): continue
-                elif (os.path.isfile(new_dir_name)): continue
+    
+    def search_anitsu(self):
+        try:
+            is_not_files = True
+            while is_not_files:
+                self.scroll_bottom_anitsu()
+                items_td = self.web_driver.find_elements(By.XPATH, '//td[@class="filename"]')
+                # items_td = self.web_driver_wait.until(EC.visibility_of_all_elements_located((By.XPATH, '//td[@class="filename"]')))
+                items = [x.text for x in items_td  if x.text != 'Readme\n.md']
+                if items[0].endswith('.mkv') or items[0].endswith('.mp4') or items[0].endswith('.cbz') or items[0].endswith('.rar') or items[0].endswith('.zip'):
+                    is_not_files = False
+                options = dict(zip(range(1, len(items)+1), items))
+                if is_not_files:
+                    for key, item in options.items(): print(f'{key} - {item}')
+                    op = self.common.only_read_int('Selecione uma opção -> ')
+                    ActionChains(self.web_driver).move_to_element(items_td[op-1]).perform()
+                    app_interable = self.web_driver.find_elements(By.ID, 'app-content')
+                    app_interable[0].send_keys(Keys.DOWN)
+                    app_interable[0].send_keys(Keys.DOWN)
+                    items_td[op-1].click()
+                    sleep(10)
+            while True:
+                for key, item in options.items(): print(f'{key} - {item}')
+                print('Exemplos:\nUm itervalo de episódios 1-10\nDeterminados episódios 1,3,4\nTodos os episódios *')
+                print('Digite o intervalo de episódios')
+                select_eps = input('>> ')
+                search = re.search(r'[0-9\-\,]+|[aA\*]', select_eps)
+                if search != None: 
+                    break
                 else:
-                    # busca o elemento de fechar player do video
-                    element = self.web_driver.find_elements(By.XPATH,'//button[@class="button-vue header-close button-vue--icon-only button-vue--vue-tertiary"]')
-                    if element: 
-                        element[0].click()
-                    # busca o elemento de acoes do arwuivo
-                    element = item.find_elements(By.CLASS_NAME, 'fileactions')
-                    if element:
-                        # tenta mover para o elemento
-                        try:
-                            self.web_driver.execute_script("arguments[0].scrollIntoView({block:'center'});",element[0])
-                            element[0].click()
-                        except:
-                            print(f"{name_file} Falhou")
-                            continue
-                        sleep(2)
-                        element = self.web_driver.find_elements(By.XPATH, '//div[@class="fileActionsMenu popovermenu bubble open menu"]')
-                        if element:
-                            self.web_driver.execute_script("arguments[0].scrollIntoView({block:'center'});",element[0])
-                            sleep(2)
-                            element[0].click()
-                            sleep(2)
-                            element =item.find_elements(By.CLASS_NAME, 'nametext')
-                            if element:
-                                #element[0].click()
-                                sleep(2)
-                                self.web.check_crdownload(self.save_path)
-            downs = os.listdir(self.save_path)
-            # move arquivo baixados para o diretório do anime
-            if dir_name:
-                for item in downs:
-                    if os.path.isfile(os.path.join(self.save_path, item)):
-                        print(os.path.join(self.save_path, item), "->", os.path.join(dir_name, item))
-                        shutil.move(os.path.join(self.save_path, item), dir_name)
+                    print("Opção inválida")
+                    continue
+            selected_items = self.select_range_episodes(select_eps, items_td)
+            return selected_items
+        except:
+            exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.search_anitsu.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
+            
+    def downdload_anitsu(self, search:bool, url:str=None):
+        try:
+            if search is True:
+                is_logged = self.login_anitsu()
+                if is_logged is False or is_logged is None:
+                    raise Exception('Erro ao realizar login')
+                acervo_link = self.web_driver.find_elements(By.CSS_SELECTOR, '.mantine-focus-auto.mantine-Text-root.mantine-Anchor-root')
+                if acervo_link is not None:
+                    acervo_link = [x for x in acervo_link if 'anitsu' in x.get_attribute('href')]
+                    link = acervo_link[0].get_attribute('href')
+                    self.web_driver.get(link)
+                    sleep(2)
+                    self.scroll_bottom_anitsu()
+                    selected_items = self.search_anitsu()
+                else:
+                    print('Erro ao obter link do acervo')
+                    return 
+            elif url is not None and search is False:
+                self.web_driver.get(url)
+            sleep(2)
+            element = self.web_driver.find_elements(By.XPATH,'//div[@class="breadcrumb"]//div/following-sibling::div[4]')
+            sleep(2)
+            name = "000"
+            if element:
+                name_dir = element[0].text
+                dir_name = self.common.create_folder(name_dir, self.save_path)
             else:
-                for item in downs:
-                    if os.path.isfile(os.path.join(self.save_path, item)):
-                        print(os.path.join(self.save_path, item), "->", os.path.join(new_dest_dir, item))
-                        shutil.move(os.path.join(save_path, item), new_dest_dir)
+                element = self.web_driver.find_elements(By.XPATH, '//div[@class="crumb svg"]')
+                if element:
+                    name_dir = element[0].text
+                    dir_name = self.common.create_folder(name_dir, self.save_path)
+                else:
+                    dest_anime_dir = os.path.join(self.save_path, name)
+                    new_dest_dir = (os.path.join(os.path.split(self.save_path)[0], os.path.split(dest_anime_dir)[-1]))
+                    if os.path.isdir(new_dest_dir) is False:
+                        dir_name = self.common.create_folder(name, self.save_path)
+            self.scroll_bottom_anitsu()
+            """ SCROLL_PAUSE_TIME = 2
+            # Pega tamanho do scroll
+            scroll_height = self.web_driver.execute_script("return document.getElementById(\"files-public-content\").scrollHeight")
+            # rola até o ultimo episódio que está visível
+            self.web_driver.execute_script("document.getElementById(\"files-public-content\").scrollIntoView(false)")
+            # Define o tamanho de rolagem
+            scroll_old = scroll_height
+            while True:
+                # Pega tamanho do scroll
+                scroll_height = self.web_driver.execute_script("return document.getElementById(\"files-public-content\").scrollHeight")
+                # armazena tamanho antigo antes da rolagem
+                scroll_old = scroll_height
+                # rola até o ultimo episódio que está visível
+                self.web_driver.execute_script("document.getElementById(\"files-public-content\").scrollIntoView(false)")
+                # Espera página carregar
+                sleep(SCROLL_PAUSE_TIME)
+                # Verifica se chegou no fim
+                scroll_height = self.web_driver.execute_script("return document.getElementById(\"files-public-content\").scrollHeight")
+                if scroll_old >= scroll_height:
+                    break """
+            if not search:
+                elements = self.web_driver.find_elements(By.XPATH, '//a[@class="name"]')
+            else:
+                elements = selected_items
+            if elements:
+                # entrar em cada vídeo
+                """ for index in range(len(elements)):
+                    elements = self.web_driver.find_elements(By.XPATH, '//a[@class="name"]')
+                    ActionChains(self.web_driver).move_to_element(elements[index]).perform()
+                    sleep(2)
+                    elements[index].click()
+                    sleep(2)
+                    element = self.web_driver.find_elements(By.XPATH, '//div[@class="plyr__poster"]')
+                    sleep(2)
+                    if element: element[0].click()
+                    sleep(2)
+                    element = self.web_driver.find_elements(By.XPATH,'//div[@class="icons-menu"]//a')
+                    if element:
+                        link = element[0].get_attribute('href')
+                        print(link)
+                        element = self.web_driver.find_elements(By.XPATH,'//button[@class="button-vue header-close button-vue--icon-only button-vue--vue-tertiary"]')
+                        if element: 
+                            element[0].click() """
+                for item in elements:
+                    # busca o elemento com o nome do arquivo
+                    element = item.find_elements(By.CLASS_NAME, 'nametext')
+                    index = elements.index(item)
+                    name_file = element[0].text.replace("\n","")
+                    # move para o elemento atual
+                    ActionChains(self.web_driver).move_to_element(item).perform()
+                    # caminho onde é baixado o video
+                    out_dir_name = os.path.join(self.save_path, name_file)
+                    # caminho com o nome do anime
+                    new_dir_name = os.path.join(out_dir_name, name_file)
+                    if (os.path.isfile(out_dir_name)): continue
+                    elif (os.path.isfile(new_dir_name)): continue
+                    else:
+                        # busca o elemento de fechar player do video
+                        element = self.web_driver.find_elements(By.XPATH,'//button[@class="button-vue header-close button-vue--icon-only button-vue--vue-tertiary"]')
+                        if element: 
+                            element[0].click()
+                        # busca o elemento de acoes do arwuivo
+                        element = item.find_elements(By.CLASS_NAME, 'fileactions')
+                        if element:
+                            # tenta mover para o elemento
+                            try:
+                                self.web_driver.execute_script("arguments[0].scrollIntoView({block:'center'});",element[0])
+                                element[0].click()
+                            except:
+                                print(f"{name_file} Falhou")
+                                continue
+                            sleep(2)
+                            element = self.web_driver.find_elements(By.XPATH, '//div[@class="fileActionsMenu popovermenu bubble open menu"]')
+                            if element:
+                                self.web_driver.execute_script("arguments[0].scrollIntoView({block:'center'});",element[0])
+                                sleep(2)
+                                element[0].click()
+                                sleep(2)
+                                element =item.find_elements(By.CLASS_NAME, 'nametext')
+                                if element:
+                                    #element[0].click()
+                                    sleep(2)
+                                    self.web.check_crdownload(self.save_path)
+                downs = os.listdir(self.save_path)
+                # move arquivo baixados para o diretório do anime
+                if dir_name:
+                    for item in downs:
+                        if os.path.isfile(os.path.join(self.save_path, item)):
+                            print(os.path.join(self.save_path, item), "->", os.path.join(dir_name, item))
+                            shutil.move(os.path.join(self.save_path, item), dir_name)
+                else:
+                    for item in downs:
+                        if os.path.isfile(os.path.join(self.save_path, item)):
+                            print(os.path.join(self.save_path, item), "->", os.path.join(new_dest_dir, item))
+                            shutil.move(os.path.join(save_path, item), new_dest_dir)
+        except:
+            exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print('ERRO DURANTE EXECUÇÃO NA FUNÇÃO {}: TIPO - {} - ARQUIVO - {} - LINHA - {} - MESSAGE:{}'.format(self.downdload_anitsu.__name__,exc_type, fname, exc_tb.tb_lineno, exc_type.__doc__.replace('\n', '')))
 
 
 if __name__ == "__main__":
@@ -717,16 +840,8 @@ if __name__ == "__main__":
     if save_path == None:
         save_path = os.path.join(os.environ['USERPROFILE'], 'Videos')
     downloader = DownloaderAnime(save_path)
-    # input_user = input("-> ")
-    # input_user = "https://anitsu.online/nextcloud/s/tpbdorE4qAnT3qt?path=%2FLetra%20B%2FBlack%20Clover%2FBlack%20Clover%20BD%2001-103"
-    # downloader.downdload_anitsu(input_user)
-    episodes_dic = downloader.get_anime_saiko('jujutsu kaisen')
-    if episodes_dic:
-        downloader.down_episodes_saiko(save_path=save_path, animes_temps=episodes_dic)
-    # common = downloader.common
+    downloader.downdload_anitsu(True)
     
-    # url, name = downloader.get_anime_animefire_net("Naruto Shippuuden")
-    # downloader.down_episodes_animefire_net(url, name)
     
             
                 
