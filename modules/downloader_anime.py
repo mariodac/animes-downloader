@@ -619,12 +619,13 @@ class DownloaderAnime():
             else:
                 return False
             login = self.web_driver.find_elements(By.CSS_SELECTOR, '.mantine-focus-auto.mantine-active.mantine-Button-root.mantine-UnstyledButton-root')
+            self.web_driver.maximize_window()
             if login is not None:
                 login[0].click()
                 print('Realizando login ...')
             else:
                 return False
-            sleep(2)
+            sleep(3)
             return True
         except:
             exc_type, exc_tb = sys.exc_info()[0], sys.exc_info()[-1]
@@ -671,17 +672,21 @@ class DownloaderAnime():
                 options = dict(zip(range(1, len(items)+1), items))
                 if is_not_files:
                     for key, item in options.items(): print(f'{key} - {item}')
+                    self.web_driver.minimize_window()
                     op = self.common.only_read_int('Selecione uma opção -> ')
+                    self.web_driver.maximize_window()
                     ActionChains(self.web_driver).move_to_element(items_td[op-1]).perform()
                     app_interable = self.web_driver.find_elements(By.ID, 'app-content')
                     app_interable[0].send_keys(Keys.DOWN)
                     app_interable[0].send_keys(Keys.DOWN)
+                    sleep(3)
                     items_td[op-1].click()
                     sleep(10)
             while True:
                 for key, item in options.items(): print(f'{key} - {item}')
                 print('Exemplos:\nUm itervalo de episódios 1-10\nDeterminados episódios 1,3,4\nTodos os episódios *')
                 print('Digite o intervalo de episódios')
+                self.web_driver.maximize_window()
                 select_eps = input('>> ')
                 search = re.search(r'[0-9\-\,]+|[aA\*]', select_eps)
                 if search != None: 
