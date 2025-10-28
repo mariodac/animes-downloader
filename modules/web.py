@@ -13,6 +13,7 @@ from progress.bar import ChargingBar
 from progress.spinner import Spinner
 from selenium.webdriver.chrome.options import Options
 from selenium import webdriver
+from fake_useragent import UserAgent
 import common
 import requests
 import re
@@ -201,10 +202,15 @@ class Web():
         """
         # Criar uma instância dr opções Chrome e devolvê-lo. Esta é a primeira chamada que você quer executar
         try:
+            ua = UserAgent()
+            # user_agent = ua.random
+            user_agent = "Mozilla/5.0 (Linux; Android 15; 23129RA5FL Build/AQ3A.240829.003) AppleWebKit/537.36 Chrome/131.0.6778.135 Mobile Safari/537.36 OPX/2.6"
+            print(user_agent)
             chrome_options = Options()
             if(headless):
                 chrome_options.add_argument("--headless")
             prefs = {}
+            chrome_options.add_argument(f'--user-agent={user_agent}')
             chrome_options.add_argument("--start-maximized")
             chrome_options.add_argument("--disable-gpu")
             chrome_options.add_argument("--disable-logging")
